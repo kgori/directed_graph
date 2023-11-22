@@ -643,14 +643,14 @@ std::wstring to_dot(const directed_graph<T> &graph,
                     std::wstring_view graph_name) {
     std::wstringstream wss;
     wss << std::format(L"digraph {} {{", graph_name.data()) << std::endl;
-    for (size_t index{0}; index < graph.size(); ++index) {
-        const auto &node_value{graph[index]};
-        const auto adjacent_nodes{graph.get_adjacent_nodes_values(node_value)};
-        if (adjacent_nodes.empty()) {
-            wss << node_value << std::endl;
+    for (auto &&node: graph) {
+        const auto b{graph.cbegin(node)};
+        const auto e{graph.cend(node)};
+        if (b == e) {
+            wss << node << std::endl;
         } else {
-            for (auto &&node: adjacent_nodes) {
-                wss << std::format(L"{} -> {}", node_value, node) << std::endl;
+            for (auto iter{b}; iter != e; ++iter) {
+                wss << std::format(L"{} -> {}", node, *iter) << std::endl;
             }
         }
     }
@@ -881,8 +881,7 @@ const_adjacent_nodes_iterator<GraphType>::const_adjacent_nodes_iterator(
 // Return a reference to the node.
 template<typename GraphType>
 typename const_adjacent_nodes_iterator<GraphType>::reference
-const_adjacent_nodes_iterator<GraphType>::operator*() const
-{
+const_adjacent_nodes_iterator<GraphType>::operator*() const {
     // Return an reference to the actual node, not the index to the node.
     return (*m_graph)[*m_adjacentNodeIterator];
 }
