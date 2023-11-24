@@ -26,17 +26,59 @@ template<typename GraphType>
 class adjacent_nodes_iterator;
 
 namespace details {
+    // Putting the allocation logic in a separate base class makes the
+    // graph node constructor exception safe. The naive version could
+    // throw between allocating memory and constructing a T{}, which results
+    // in a leak because the destructor isn't called.
     template<typename T, typename A = std::allocator<T>>
-    class graph_node {
+    class graph_node_allocator {
+    protected:
+        explicit graph_node_allocator(const A& allocator);
+
+        // Copy and move constructors
+        graph_node_allocator(const graph_node_allocator&) = delete;
+        graph_node_allocator(graph_node_allocator&& src) noexcept;
+
+        // Copy and move assignment operators
+        graph_node_allocator& operator=(const graph_node_allocator&) = delete;
+        graph_node_allocator&
+        operator=(graph_node_allocator&&) noexcept = delete;
+
+        ~graph_node_allocator();
+
+        A m_allocator;
+        T* m_data{nullptr};
+    };
+
+    template<typename T, typename A>
+    graph_node_allocator<T, A>::graph_node_allocator(const A& allocator)
+        : m_allocator{allocator} {
+        m_data = m_allocator.allocate(1);
+    }
+
+    template<typename T, typename A>
+    graph_node_allocator<T, A>::graph_node_allocator(
+        graph_node_allocator&& src) noexcept
+        : m_allocator{std::move(src.m_allocator)},
+          m_data{std::exchange(src.m_data, nullptr)} {}
+
+    template<typename T, typename A>
+    graph_node_allocator<T, A>::~graph_node_allocator() {
+        m_allocator.deallocate(m_data, 1);
+        m_data = nullptr;
+    }
+
+    template<typename T, typename A = std::allocator<T>>
+    class graph_node : private graph_node_allocator<T, A> {
     public:
         // Constructors
-        graph_node(directed_graph<T, A>* graph, const T& t);
+        graph_node(directed_graph<T, A>& graph, const T& t);
 
-        graph_node(directed_graph<T, A>* graph, T&& t);
+        graph_node(directed_graph<T, A>& graph, T&& t);
 
-        graph_node(directed_graph<T, A>* graph, const T& t, const A& allocator);
+        graph_node(directed_graph<T, A>& graph, const T& t, const A& allocator);
 
-        graph_node(directed_graph<T, A>* graph, T&& t, const A& allocator);
+        graph_node(directed_graph<T, A>& graph, T&& t, const A& allocator);
 
         ~graph_node();
 
@@ -61,8 +103,8 @@ namespace details {
     private:
         friend class directed_graph<T, A>;
 
-        // Pointer to the graph this node belongs to
-        directed_graph<T, A>* m_graph;
+        // A reference to the graph this node belongs to
+        directed_graph<T, A>& m_graph;
 
         // Type alias for the container type used to store nodes
         using adjacency_list_type = std::set<size_t>;
@@ -73,92 +115,80 @@ namespace details {
         [[nodiscard]] const adjacency_list_type&
         get_adjacent_nodes_indices() const;
 
-        A m_allocator;
-        T* m_data{nullptr};
         adjacency_list_type m_adjacentNodeIndices;
     };
 
     template<typename T, typename A>
-    graph_node<T, A>::graph_node(directed_graph<T, A>* graph, const T& t,
+    graph_node<T, A>::graph_node(directed_graph<T, A>& graph, const T& t,
                                  const A& allocator)
-        : m_graph{graph}, m_allocator{allocator} {
-        m_data = m_allocator.allocate(1);
-        new (m_data) T{t};// Placement new
+        : m_graph{graph}, graph_node_allocator<T, A>{allocator} {
+        new (this->m_data) T{t};// Placement new
     }
 
     template<typename T, typename A>
-    graph_node<T, A>::graph_node(directed_graph<T, A>* graph, T&& t,
+    graph_node<T, A>::graph_node(directed_graph<T, A>& graph, T&& t,
                                  const A& allocator)
-        : m_graph{graph}, m_allocator{allocator} {
-        m_data = m_allocator.allocate(1);
-        new (m_data) T{std::move(t)};
+        : m_graph{graph}, graph_node_allocator<T, A>{allocator} {
+        new (this->m_data) T{std::move(t)};
     }
 
     template<typename T, typename A>
-    graph_node<T, A>::graph_node(directed_graph<T, A>* graph, const T& t)
+    graph_node<T, A>::graph_node(directed_graph<T, A>& graph, const T& t)
         : graph_node<T, A>{graph, t, A{}} {}
 
     template<typename T, typename A>
-    graph_node<T, A>::graph_node(directed_graph<T, A>* graph, T&& t)
+    graph_node<T, A>::graph_node(directed_graph<T, A>& graph, T&& t)
         : graph_node<T, A>{graph, std::move(t), A{}} {}
 
     // destructor required - memory management gets a little hairy now allocators are involved
     template<typename T, typename A>
     graph_node<T, A>::~graph_node() {
-        if (m_data) {
-            m_data->~T();
-            m_allocator.deallocate(m_data, 1);
-            m_data = nullptr;
-        }
+        if (this->m_data) { this->m_data->~T(); }
     }
 
     template<typename T, typename A>
     graph_node<T, A>::graph_node(const graph_node& src)
-        : m_allocator{src.m_allocator}, m_graph{src.m_graph},
+        : graph_node_allocator<T, A>{src.m_allocator}, m_graph{src.m_graph},
           m_adjacentNodeIndices{src.m_adjacentNodeIndices} {
-        m_data = m_allocator.allocate(1);
-        new (m_data) T{*(src.m_data)};
+        new (this->m_data) T{*(src.m_data)};
     }
 
     template<typename T, typename A>
     graph_node<T, A>::graph_node(graph_node&& src) noexcept
-        : m_allocator{std::move(src.m_allocator)},
-          m_graph{std::exchange(src.m_graph, nullptr)},
-          m_adjacentNodeIndices{std::move(src.m_adjacentNodeIndices)},
-          m_data{std::exchange(src.m_data, nullptr)} {}
+        : graph_node_allocator<T, A>{std::move(src)}, m_graph{src.m_graph},
+          m_adjacentNodeIndices{std::move(src.m_adjacentNodeIndices)} {}
 
     template<typename T, typename A>
     graph_node<T, A>& graph_node<T, A>::operator=(const graph_node& rhs) {
         if (this != &rhs) {
             m_graph = rhs.m_graph;
             m_adjacentNodeIndices = rhs.m_adjacentNodeIndices;
-            m_data->~T();
-            new (m_data) T{*(rhs.m_data)};
+            new (this->m_data) T{*(rhs.m_data)};
         }
         return *this;
     }
 
     template<typename T, typename A>
     graph_node<T, A>& graph_node<T, A>::operator=(graph_node&& rhs) noexcept {
-        m_graph = std::exchange(rhs.m_graph, nullptr);
+        m_graph = rhs.m_graph;
         m_adjacentNodeIndices = std::move(rhs.m_adjacentNodeIndices);
-        m_data = std::exchange(rhs.m_data, nullptr);
+        this->m_data = std::exchange(rhs.m_data, nullptr);
         return *this;
     }
 
     template<typename T, typename A>
     T& graph_node<T, A>::value() noexcept {
-        return *m_data;
+        return *(this->m_data);
     }
 
     template<typename T, typename A>
     const T& graph_node<T, A>::value() const noexcept {
-        return *m_data;
+        return *(this->m_data);
     };
 
     template<typename T, typename A>
     bool graph_node<T, A>::operator==(const graph_node& rhs) const {
-        return m_graph == rhs.m_graph && *m_data == *(rhs.m_data) &&
+        return &m_graph == &rhs.m_graph && *(this->m_data) == *(rhs.m_data) &&
                m_adjacentNodeIndices == rhs.m_adjacentNodeIndices;
     }
 
@@ -386,7 +416,7 @@ directed_graph<T, A>::insert(T&& node_value) {
         // Value is already in the graph
         return {iterator{iter, this}, false};
     }
-    m_nodes.emplace_back(this, std::move(node_value), m_allocator);
+    m_nodes.emplace_back(*this, std::move(node_value), m_allocator);
     return {iterator{--std::end(m_nodes), this}, true};
 }
 
