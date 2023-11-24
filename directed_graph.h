@@ -26,13 +26,29 @@ template<typename GraphType>
 class adjacent_nodes_iterator;
 
 namespace details {
-    template<typename T>
+    template<typename T, typename A = std::allocator<T>>
     class graph_node {
     public:
         // Constructors
-        graph_node(directed_graph<T>* graph, const T& t);
+        graph_node(directed_graph<T, A>* graph, const T& t);
 
-        graph_node(directed_graph<T>* graph, T&& t);
+        graph_node(directed_graph<T, A>* graph, T&& t);
+
+        graph_node(directed_graph<T, A>* graph, const T& t, const A& allocator);
+
+        graph_node(directed_graph<T, A>* graph, T&& t, const A& allocator);
+
+        ~graph_node();
+
+        // Copy and move constructors
+        graph_node(const graph_node& src);
+
+        graph_node(graph_node&& src) noexcept;
+
+        // Copy and move assignment
+        graph_node& operator=(const graph_node& rhs);
+
+        graph_node& operator=(graph_node&& rhs) noexcept;
 
         // Getters
         [[nodiscard]] T& value() noexcept;
@@ -43,10 +59,10 @@ namespace details {
         bool operator==(const graph_node&) const = default;
 
     private:
-        friend class directed_graph<T>;
+        friend class directed_graph<T, A>;
 
         // Pointer to the graph this node belongs to
-        directed_graph<T>* m_graph;
+        directed_graph<T, A>* m_graph;
 
         // Type alias for the container type used to store nodes
         using adjacency_list_type = std::set<size_t>;
@@ -57,7 +73,8 @@ namespace details {
         [[nodiscard]] const adjacency_list_type&
         get_adjacent_nodes_indices() const;
 
-        T m_data;
+        A m_allocator;
+        T* m_data{nullptr};
         adjacency_list_type m_adjacentNodeIndices;
     };
 
