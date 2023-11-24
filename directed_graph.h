@@ -306,11 +306,14 @@ public:
     get_adjacent_nodes_values(const T& node_value) const;
 
 private:
+    friend class details::graph_node<T, A>;
     friend class const_directed_graph_iterator<directed_graph>;
     friend class directed_graph_iterator<directed_graph>;
 
     using nodes_container_type = std::vector<details::graph_node<T>>;
+
     nodes_container_type m_nodes;
+    A m_allocator;
 
     // Returns an iterator at the searched-for value, or the end iterator
     // if the value is not found.
