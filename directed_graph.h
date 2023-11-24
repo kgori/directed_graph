@@ -302,7 +302,7 @@ public:
 
     // Returns a set with the values of the nodes connected to the node with
     // node_value
-    [[nodiscard]] std::set<T>
+    [[nodiscard]] std::set<T, std::less, A>
     get_adjacent_nodes_values(const T& node_value) const;
 
 private:
@@ -329,28 +329,39 @@ private:
     void remove_all_links_to(
         typename nodes_container_type::const_iterator node_iter);
 
-    std::set<T> get_adjacent_nodes_values(
+    [[nodiscard]] std::set<T, std::less, A> get_adjacent_nodes_values(
         const typename details::graph_node<T>::adjacency_list_type& indices)
         const;
 };
 
-template<typename T>
-typename directed_graph<T>::nodes_container_type::iterator
-directed_graph<T>::findNode(const T& node_value) {
+// Stand-alone swap uses swap() method internally. I think this is provided
+// to better handle some ADL edge cases?
+template<typename A, typename T>
+void swap(directed_graph<T, A>& first, directed_graph<T, A>& second) noexcept {
+    first.swap(second);
+}
+
+template<typename T, typename A>
+directed_graph<T, A>::directed_graph(const A& allocator) noexcept
+    : m_nodes{allocator}, m_allocator{allocator} {}
+
+template<typename T, typename A>
+typename directed_graph<T, A>::nodes_container_type::iterator
+directed_graph<T, A>::findNode(const T& node_value) {
     return std::find_if(
         std::begin(m_nodes), std::end(m_nodes),
         [&node_value](const auto& node) { return node.value() == node_value; });
 }
 
-template<typename T>
-typename directed_graph<T>::nodes_container_type::const_iterator
-directed_graph<T>::findNode(const T& node_value) const {
-    return const_cast<directed_graph<T>*>(this)->findNode(node_value);
+template<typename T, typename A>
+typename directed_graph<T, A>::nodes_container_type::const_iterator
+directed_graph<T, A>::findNode(const T& node_value) const {
+    return const_cast<directed_graph<T, A>*>(this)->findNode(node_value);
 }
 
-template<typename T>
-std::pair<typename directed_graph<T>::iterator, bool>
-directed_graph<T>::insert(T&& node_value) {
+template<typename T, typename A>
+std::pair<typename directed_graph<T, A>::iterator, bool>
+directed_graph<T, A>::insert(T&& node_value) {
     auto iter{findNode(node_value)};
     if (iter != std::end(m_nodes)) {
         // Value is already in the graph
@@ -360,37 +371,37 @@ directed_graph<T>::insert(T&& node_value) {
     return {iterator{--std::end(m_nodes), this}, true};
 }
 
-template<typename T>
-std::pair<typename directed_graph<T>::iterator, bool>
-directed_graph<T>::insert(const T& node_value) {
+template<typename T, typename A>
+std::pair<typename directed_graph<T, A>::iterator, bool>
+directed_graph<T, A>::insert(const T& node_value) {
     T copy{node_value};
     return insert(std::move(copy));
 }
 
-template<typename T>
-typename directed_graph<T>::iterator
-directed_graph<T>::insert(const_iterator hint, T&& node_value) {
+template<typename T, typename A>
+typename directed_graph<T, A>::iterator
+directed_graph<T, A>::insert(const_iterator hint, T&& node_value) {
     // Ignore the hint, just forward to standard insert.
     return insert(node_value).first;
 }
 
-template<typename T>
-typename directed_graph<T>::iterator
-directed_graph<T>::insert(const_iterator hint, const T& node_value) {
+template<typename T, typename A>
+typename directed_graph<T, A>::iterator
+directed_graph<T, A>::insert(const_iterator hint, const T& node_value) {
     return insert(node_value).first;
 }
 
 // Nested templates - can't use template<typename T, typename Iter>
-template<typename T>
+template<typename T, typename A>
 template<typename Iter>
-void directed_graph<T>::insert(Iter first, Iter last) {
+void directed_graph<T, A>::insert(Iter first, Iter last) {
     // Copy each element in the range by using an insert_iterator
     std::copy(first, last, std::insert_iterator{*this, begin()});
 }
 
-template<typename T>
-bool directed_graph<T>::insert_edge(const T& from_node_value,
-                                    const T& to_node_value) {
+template<typename T, typename A>
+bool directed_graph<T, A>::insert_edge(const T& from_node_value,
+                                       const T& to_node_value) {
     const auto from{findNode(from_node_value)};
     const auto to{findNode(to_node_value)};
     if (from == std::end(m_nodes) || to == std::end(m_nodes)) { return false; }
@@ -398,15 +409,15 @@ bool directed_graph<T>::insert_edge(const T& from_node_value,
     return from->get_adjacent_nodes_indices().insert(to_index).second;
 }
 
-template<typename T>
-size_t directed_graph<T>::get_index_of_node(
+template<typename T, typename A>
+size_t directed_graph<T, A>::get_index_of_node(
     const typename nodes_container_type::const_iterator& node) const noexcept {
     const auto index{std::distance(std::cbegin(m_nodes), node)};
     return static_cast<size_t>(index);
 }
 
-template<typename T>
-void directed_graph<T>::remove_all_links_to(
+template<typename T, typename A>
+void directed_graph<T, A>::remove_all_links_to(
     typename nodes_container_type::const_iterator node_iter) {
     const size_t node_index{get_index_of_node(node_iter)};
 
@@ -430,8 +441,8 @@ void directed_graph<T>::remove_all_links_to(
     }
 }
 
-template<typename T>
-bool directed_graph<T>::erase(const T& node_value) {
+template<typename T, typename A>
+bool directed_graph<T, A>::erase(const T& node_value) {
     auto iter{findNode(node_value)};
     if (iter == std::end(m_nodes)) { return false; }
     remove_all_links_to(iter);
@@ -439,9 +450,9 @@ bool directed_graph<T>::erase(const T& node_value) {
     return true;
 }
 
-template<typename T>
-typename directed_graph<T>::iterator
-directed_graph<T>::erase(const_iterator pos) {
+template<typename T, typename A>
+typename directed_graph<T, A>::iterator
+directed_graph<T, A>::erase(const_iterator pos) {
     if (pos.m_nodeIterator == std::end(m_nodes)) {
         return iterator{std::end(m_nodes), this};
     }
@@ -449,9 +460,9 @@ directed_graph<T>::erase(const_iterator pos) {
     return iterator{m_nodes.erase(pos.m_nodeIterator), this};
 }
 
-template<typename T>
-typename directed_graph<T>::iterator
-directed_graph<T>::erase(const_iterator first, const_iterator last) {
+template<typename T, typename A>
+typename directed_graph<T, A>::iterator
+directed_graph<T, A>::erase(const_iterator first, const_iterator last) {
     for (auto iter{first}; iter != last; ++iter) {
         if (iter.m_nodeIterator != std::end(m_nodes)) {
             remove_all_links_to(iter.m_nodeIterator);
@@ -461,9 +472,9 @@ directed_graph<T>::erase(const_iterator first, const_iterator last) {
                     this};
 }
 
-template<typename T>
-bool directed_graph<T>::erase_edge(const T& from_node_value,
-                                   const T& to_node_value) {
+template<typename T, typename A>
+bool directed_graph<T, A>::erase_edge(const T& from_node_value,
+                                      const T& to_node_value) {
     const auto from{findNode(from_node_value)};
     const auto to{findNode(to_node_value)};
     if (from == std::end(m_nodes) || to == std::end(m_nodes)) { return false; }
@@ -472,41 +483,42 @@ bool directed_graph<T>::erase_edge(const T& from_node_value,
     return true;
 }
 
-template<typename T>
-void directed_graph<T>::clear() noexcept {
+template<typename T, typename A>
+void directed_graph<T, A>::clear() noexcept {
     m_nodes.clear();
 }
 
-template<typename T>
-void directed_graph<T>::swap(directed_graph& other_graph) noexcept {
+template<typename T, typename A>
+void directed_graph<T, A>::swap(directed_graph& other_graph) noexcept {
     m_nodes.swap(other_graph.m_nodes);
 }
 
-template<typename T>
-typename directed_graph<T>::reference
-directed_graph<T>::operator[](size_t index) {
+template<typename T, typename A>
+typename directed_graph<T, A>::reference
+directed_graph<T, A>::operator[](size_t index) {
     return m_nodes[index].value();
 }
 
-template<typename T>
-typename directed_graph<T>::const_reference
-directed_graph<T>::operator[](size_type index) const {
+template<typename T, typename A>
+typename directed_graph<T, A>::const_reference
+directed_graph<T, A>::operator[](size_type index) const {
     return m_nodes[index].value();
 }
 
-template<typename T>
-typename directed_graph<T>::reference directed_graph<T>::at(size_type index) {
+template<typename T, typename A>
+typename directed_graph<T, A>::reference
+directed_graph<T, A>::at(size_type index) {
     return m_nodes.at(index).value();
 }
 
-template<typename T>
-typename directed_graph<T>::const_reference
-directed_graph<T>::at(directed_graph::size_type index) const {
+template<typename T, typename A>
+typename directed_graph<T, A>::const_reference
+directed_graph<T, A>::at(directed_graph::size_type index) const {
     return m_nodes.at(index).value();
 }
 
-template<typename T>
-bool directed_graph<T>::operator==(const directed_graph& rhs) const {
+template<typename T, typename A>
+bool directed_graph<T, A>::operator==(const directed_graph& rhs) const {
     if (m_nodes.size() != rhs.m_nodes.size()) { return false; }
 
     for (auto&& node: m_nodes) {
@@ -521,40 +533,44 @@ bool directed_graph<T>::operator==(const directed_graph& rhs) const {
     return true;
 }
 
-template<typename T>
-std::set<T> directed_graph<T>::get_adjacent_nodes_values(
-    const typename details::graph_node<T>::adjacency_list_type& indices) const {
-    std::set<T> values;
+template<typename T, typename A>
+std::set<T, std::less, A> directed_graph<T, A>::get_adjacent_nodes_values(
+    const typename details::graph_node<T, A>::adjacency_list_type& indices)
+    const {
+    std::set<T, std::less, A> values(m_allocator);
     for (auto&& index: indices) { values.insert(m_nodes[index].value()); }
     return values;
 }
 
-template<typename T>
-bool directed_graph<T>::operator!=(const directed_graph<T>& rhs) const {
+template<typename T, typename A>
+bool directed_graph<T, A>::operator!=(const directed_graph<T>& rhs) const {
     return !(*this == rhs);
 }
 
-template<typename T>
-std::set<T>
-directed_graph<T>::get_adjacent_nodes_values(const T& node_value) const {
+template<typename T, typename A>
+std::set<T, std::less, A>
+directed_graph<T, A>::get_adjacent_nodes_values(const T& node_value) const {
     auto iter{findNode(node_value)};
-    if (iter == std::end(m_nodes)) { return std::set<T>{}; }
+    if (iter == std::end(m_nodes)) {
+        return std::set<T, std::less, A>{m_allocator};
+    }
     return get_adjacent_nodes_values(iter->get_adjacent_nodes_indices());
 }
 
-template<typename T>
-typename directed_graph<T>::size_type directed_graph<T>::size() const noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::size_type
+directed_graph<T, A>::size() const noexcept {
     return m_nodes.size();
 }
 
-template<typename T>
-bool directed_graph<T>::empty() const noexcept {
+template<typename T, typename A>
+bool directed_graph<T, A>::empty() const noexcept {
     return m_nodes.empty();
 }
 
-template<typename T>
-typename directed_graph<T>::size_type
-directed_graph<T>::max_size() const noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::size_type
+directed_graph<T, A>::max_size() const noexcept {
     return m_nodes.max_size();
 }
 
