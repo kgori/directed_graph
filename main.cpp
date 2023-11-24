@@ -5,12 +5,12 @@ struct Point {
     int x{};
     int y{};
 
-    bool operator==(const Point &other) const {
+    bool operator==(const Point& other) const {
         return x == other.x and y == other.y;
     }
 };
 
-std::ostream &operator<<(std::ostream &os, const Point p) {
+std::ostream& operator<<(std::ostream& os, const Point p) {
     os << "(" << p.x << "," << p.y << ")";
     return os;
 }
@@ -55,7 +55,7 @@ int main() {
     }
     std::cout << std::endl;
 
-    for (auto &node: graph) { std::cout << node << std::endl; }
+    for (auto& node: graph) { std::cout << node << std::endl; }
     std::cout << std::endl;
 
     auto result{std::find(std::begin(graph), std::end(graph), 33)};
@@ -66,7 +66,7 @@ int main() {
     }
 
     auto count{std::count_if(std::begin(graph), std::end(graph),
-                             [](const auto &node) { return node > 22; })};
+                             [](const auto& node) { return node > 22; })};
     std::cout << count << std::endl;
 
     for (auto iter{graph.rbegin()}; iter != graph.rend(); ++iter) {

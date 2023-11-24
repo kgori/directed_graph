@@ -30,31 +30,31 @@ namespace details {
     class graph_node {
     public:
         // Constructors
-        graph_node(directed_graph<T> *graph, const T &t);
+        graph_node(directed_graph<T>* graph, const T& t);
 
-        graph_node(directed_graph<T> *graph, T &&t);
+        graph_node(directed_graph<T>* graph, T&& t);
 
         // Getters
-        [[nodiscard]] T &value() noexcept;
+        [[nodiscard]] T& value() noexcept;
 
-        [[nodiscard]] const T &value() const noexcept;
+        [[nodiscard]] const T& value() const noexcept;
 
         // C++20 defaulted equality comparison
-        bool operator==(const graph_node &) const = default;
+        bool operator==(const graph_node&) const = default;
 
     private:
         friend class directed_graph<T>;
 
         // Pointer to the graph this node belongs to
-        directed_graph<T> *m_graph;
+        directed_graph<T>* m_graph;
 
         // Type alias for the container type used to store nodes
         using adjacency_list_type = std::set<size_t>;
 
         // A ref to the adjacency list
-        [[nodiscard]] adjacency_list_type &get_adjacent_nodes_indices();
+        [[nodiscard]] adjacency_list_type& get_adjacent_nodes_indices();
 
-        [[nodiscard]] const adjacency_list_type &
+        [[nodiscard]] const adjacency_list_type&
         get_adjacent_nodes_indices() const;
 
         T m_data;
@@ -62,31 +62,31 @@ namespace details {
     };
 
     template<typename T>
-    graph_node<T>::graph_node(directed_graph<T> *graph, const T &t)
+    graph_node<T>::graph_node(directed_graph<T>* graph, const T& t)
         : m_graph{graph}, m_data{t} {}
 
     template<typename T>
-    graph_node<T>::graph_node(directed_graph<T> *graph, T &&t)
+    graph_node<T>::graph_node(directed_graph<T>* graph, T&& t)
         : m_graph{graph}, m_data{std::move(t)} {}
 
     template<typename T>
-    T &graph_node<T>::value() noexcept {
+    T& graph_node<T>::value() noexcept {
         return m_data;
     }
 
     template<typename T>
-    const T &graph_node<T>::value() const noexcept {
+    const T& graph_node<T>::value() const noexcept {
         return m_data;
     };
 
     template<typename T>
-    typename graph_node<T>::adjacency_list_type &
+    typename graph_node<T>::adjacency_list_type&
     graph_node<T>::get_adjacent_nodes_indices() {
         return m_adjacentNodeIndices;
     }
 
     template<typename T>
-    const typename graph_node<T>::adjacency_list_type &
+    const typename graph_node<T>::adjacency_list_type&
     graph_node<T>::get_adjacent_nodes_indices() const {
         return m_adjacentNodeIndices;
     }
@@ -97,8 +97,8 @@ class directed_graph {
 public:
     // Necessary type aliases for directed_graph to function as an STL container
     using value_type = T;
-    using reference = value_type &;
-    using const_reference = const value_type &;
+    using reference = value_type&;
+    using const_reference = const value_type&;
     using size_type = size_t;
     using difference_type = ptrdiff_t;
 
@@ -142,59 +142,59 @@ public:
 
     const_reverse_iterator crend() const noexcept;
 
-    iterator_adjacent_nodes begin(const T &node_value) noexcept;
+    iterator_adjacent_nodes begin(const T& node_value) noexcept;
 
-    iterator_adjacent_nodes end(const T &node_value) noexcept;
+    iterator_adjacent_nodes end(const T& node_value) noexcept;
 
-    const_iterator_adjacent_nodes begin(const T &node_value) const noexcept;
+    const_iterator_adjacent_nodes begin(const T& node_value) const noexcept;
 
-    const_iterator_adjacent_nodes end(const T &node_value) const noexcept;
+    const_iterator_adjacent_nodes end(const T& node_value) const noexcept;
 
-    const_iterator_adjacent_nodes cbegin(const T &node_value) const noexcept;
+    const_iterator_adjacent_nodes cbegin(const T& node_value) const noexcept;
 
-    const_iterator_adjacent_nodes cend(const T &node_value) const noexcept;
+    const_iterator_adjacent_nodes cend(const T& node_value) const noexcept;
 
-    reverse_iterator_adjacent_nodes rbegin(const T &node_value) noexcept;
+    reverse_iterator_adjacent_nodes rbegin(const T& node_value) noexcept;
 
-    reverse_iterator_adjacent_nodes rend(const T &node_value) noexcept;
-
-    const_reverse_iterator_adjacent_nodes
-    rbegin(const T &node_value) const noexcept;
+    reverse_iterator_adjacent_nodes rend(const T& node_value) noexcept;
 
     const_reverse_iterator_adjacent_nodes
-    rend(const T &node_value) const noexcept;
+    rbegin(const T& node_value) const noexcept;
 
     const_reverse_iterator_adjacent_nodes
-    crbegin(const T &node_value) const noexcept;
+    rend(const T& node_value) const noexcept;
 
     const_reverse_iterator_adjacent_nodes
-    crend(const T &node_value) const noexcept;
+    crbegin(const T& node_value) const noexcept;
+
+    const_reverse_iterator_adjacent_nodes
+    crend(const T& node_value) const noexcept;
 
     // Returns true if the node is successfully inserted. If the node is
     // already present, then false is returned.
-    std::pair<iterator, bool> insert(T &&node_value);
+    std::pair<iterator, bool> insert(T&& node_value);
 
-    std::pair<iterator, bool> insert(const T &node_value);
+    std::pair<iterator, bool> insert(const T& node_value);
 
-    iterator insert(const_iterator hint, T &&node_value);
+    iterator insert(const_iterator hint, T&& node_value);
 
-    iterator insert(const_iterator hint, const T &node_value);
+    iterator insert(const_iterator hint, const T& node_value);
 
     template<typename Iter>
     void insert(Iter first, Iter last);
 
     // Returns true if the given node is erased
-    bool erase(const T &node_value);
+    bool erase(const T& node_value);
 
     iterator erase(const_iterator pos);
 
     iterator erase(const_iterator first, const_iterator last);
 
     // Returns true if the edge was inserted successfully
-    bool insert_edge(const T &from_node_value, const T &to_node_value);
+    bool insert_edge(const T& from_node_value, const T& to_node_value);
 
     // Returns true if the edge is removed successfully
-    bool erase_edge(const T &from_node_value, const T &to_node_value);
+    bool erase_edge(const T& from_node_value, const T& to_node_value);
 
     // Empties the graph
     void clear() noexcept;
@@ -211,12 +211,12 @@ public:
 
     // Graphs are equal if they contain the same nodes and edges,
     // regardless of order
-    bool operator==(const directed_graph &rhs) const;
+    bool operator==(const directed_graph& rhs) const;
 
-    bool operator!=(const directed_graph &rhs) const;
+    bool operator!=(const directed_graph& rhs) const;
 
     // Swaps all nodes between this graph and other_graph
-    void swap(directed_graph &other_graph) noexcept;
+    void swap(directed_graph& other_graph) noexcept;
 
     [[nodiscard]] size_type size() const noexcept;
 
@@ -227,7 +227,7 @@ public:
     // Returns a set with the values of the nodes connected to the node with
     // node_value
     [[nodiscard]] std::set<T>
-    get_adjacent_nodes_values(const T &node_value) const;
+    get_adjacent_nodes_values(const T& node_value) const;
 
 private:
     friend class const_directed_graph_iterator<directed_graph>;
@@ -238,39 +238,40 @@ private:
 
     // Returns an iterator at the searched-for value, or the end iterator
     // if the value is not found.
-    typename nodes_container_type::iterator findNode(const T &node_value);
+    typename nodes_container_type::iterator findNode(const T& node_value);
 
     typename nodes_container_type::const_iterator
-    findNode(const T &node_value) const;
+    findNode(const T& node_value) const;
 
-    size_t get_index_of_node(const typename nodes_container_type::const_iterator
-                                 &node) const noexcept;
+    size_t
+    get_index_of_node(const typename nodes_container_type::const_iterator& node)
+        const noexcept;
 
     void remove_all_links_to(
         typename nodes_container_type::const_iterator node_iter);
 
     std::set<T> get_adjacent_nodes_values(
-        const typename details::graph_node<T>::adjacency_list_type &indices)
+        const typename details::graph_node<T>::adjacency_list_type& indices)
         const;
 };
 
 template<typename T>
 typename directed_graph<T>::nodes_container_type::iterator
-directed_graph<T>::findNode(const T &node_value) {
+directed_graph<T>::findNode(const T& node_value) {
     return std::find_if(
         std::begin(m_nodes), std::end(m_nodes),
-        [&node_value](const auto &node) { return node.value() == node_value; });
+        [&node_value](const auto& node) { return node.value() == node_value; });
 }
 
 template<typename T>
 typename directed_graph<T>::nodes_container_type::const_iterator
-directed_graph<T>::findNode(const T &node_value) const {
-    return const_cast<directed_graph<T> *>(this)->findNode(node_value);
+directed_graph<T>::findNode(const T& node_value) const {
+    return const_cast<directed_graph<T>*>(this)->findNode(node_value);
 }
 
 template<typename T>
 std::pair<typename directed_graph<T>::iterator, bool>
-directed_graph<T>::insert(T &&node_value) {
+directed_graph<T>::insert(T&& node_value) {
     auto iter{findNode(node_value)};
     if (iter != std::end(m_nodes)) {
         // Value is already in the graph
@@ -282,21 +283,21 @@ directed_graph<T>::insert(T &&node_value) {
 
 template<typename T>
 std::pair<typename directed_graph<T>::iterator, bool>
-directed_graph<T>::insert(const T &node_value) {
+directed_graph<T>::insert(const T& node_value) {
     T copy{node_value};
     return insert(std::move(copy));
 }
 
 template<typename T>
 typename directed_graph<T>::iterator
-directed_graph<T>::insert(const_iterator hint, T &&node_value) {
+directed_graph<T>::insert(const_iterator hint, T&& node_value) {
     // Ignore the hint, just forward to standard insert.
     return insert(node_value).first;
 }
 
 template<typename T>
 typename directed_graph<T>::iterator
-directed_graph<T>::insert(const_iterator hint, const T &node_value) {
+directed_graph<T>::insert(const_iterator hint, const T& node_value) {
     return insert(node_value).first;
 }
 
@@ -309,8 +310,8 @@ void directed_graph<T>::insert(Iter first, Iter last) {
 }
 
 template<typename T>
-bool directed_graph<T>::insert_edge(const T &from_node_value,
-                                    const T &to_node_value) {
+bool directed_graph<T>::insert_edge(const T& from_node_value,
+                                    const T& to_node_value) {
     const auto from{findNode(from_node_value)};
     const auto to{findNode(to_node_value)};
     if (from == std::end(m_nodes) || to == std::end(m_nodes)) { return false; }
@@ -320,7 +321,7 @@ bool directed_graph<T>::insert_edge(const T &from_node_value,
 
 template<typename T>
 size_t directed_graph<T>::get_index_of_node(
-    const typename nodes_container_type::const_iterator &node) const noexcept {
+    const typename nodes_container_type::const_iterator& node) const noexcept {
     const auto index{std::distance(std::cbegin(m_nodes), node)};
     return static_cast<size_t>(index);
 }
@@ -331,8 +332,8 @@ void directed_graph<T>::remove_all_links_to(
     const size_t node_index{get_index_of_node(node_iter)};
 
     // Iterate over all adjacency lists of all nodes
-    for (auto &&node: m_nodes) {
-        auto &adjacencyIndices{node.get_adjacent_nodes_indices()};
+    for (auto&& node: m_nodes) {
+        auto& adjacencyIndices{node.get_adjacent_nodes_indices()};
         // Remove references from to-be-deleted node
         adjacencyIndices.erase(node_index);
         // Modify adjacency indices to account for deletion
@@ -342,7 +343,7 @@ void directed_graph<T>::remove_all_links_to(
         std::vector<size_t> indices(std::begin(adjacencyIndices),
                                     std::end(adjacencyIndices));
         std::for_each(std::begin(indices), std::end(indices),
-                      [node_index](size_t &index) {
+                      [node_index](size_t& index) {
                           if (index > node_index) { --index; }
                       });
         adjacencyIndices.clear();
@@ -351,7 +352,7 @@ void directed_graph<T>::remove_all_links_to(
 }
 
 template<typename T>
-bool directed_graph<T>::erase(const T &node_value) {
+bool directed_graph<T>::erase(const T& node_value) {
     auto iter{findNode(node_value)};
     if (iter == std::end(m_nodes)) { return false; }
     remove_all_links_to(iter);
@@ -382,8 +383,8 @@ directed_graph<T>::erase(const_iterator first, const_iterator last) {
 }
 
 template<typename T>
-bool directed_graph<T>::erase_edge(const T &from_node_value,
-                                   const T &to_node_value) {
+bool directed_graph<T>::erase_edge(const T& from_node_value,
+                                   const T& to_node_value) {
     const auto from{findNode(from_node_value)};
     const auto to{findNode(to_node_value)};
     if (from == std::end(m_nodes) || to == std::end(m_nodes)) { return false; }
@@ -398,7 +399,7 @@ void directed_graph<T>::clear() noexcept {
 }
 
 template<typename T>
-void directed_graph<T>::swap(directed_graph &other_graph) noexcept {
+void directed_graph<T>::swap(directed_graph& other_graph) noexcept {
     m_nodes.swap(other_graph.m_nodes);
 }
 
@@ -426,10 +427,10 @@ directed_graph<T>::at(directed_graph::size_type index) const {
 }
 
 template<typename T>
-bool directed_graph<T>::operator==(const directed_graph &rhs) const {
+bool directed_graph<T>::operator==(const directed_graph& rhs) const {
     if (m_nodes.size() != rhs.m_nodes.size()) { return false; }
 
-    for (auto &&node: m_nodes) {
+    for (auto&& node: m_nodes) {
         const auto rhsNodeIter{rhs.findNode(node.value())};
         if (rhsNodeIter == std::end(rhs.m_nodes)) { return false; }
         const auto adjacent_values_lhs{
@@ -443,20 +444,20 @@ bool directed_graph<T>::operator==(const directed_graph &rhs) const {
 
 template<typename T>
 std::set<T> directed_graph<T>::get_adjacent_nodes_values(
-    const typename details::graph_node<T>::adjacency_list_type &indices) const {
+    const typename details::graph_node<T>::adjacency_list_type& indices) const {
     std::set<T> values;
-    for (auto &&index: indices) { values.insert(m_nodes[index].value()); }
+    for (auto&& index: indices) { values.insert(m_nodes[index].value()); }
     return values;
 }
 
 template<typename T>
-bool directed_graph<T>::operator!=(const directed_graph<T> &rhs) const {
+bool directed_graph<T>::operator!=(const directed_graph<T>& rhs) const {
     return !(*this == rhs);
 }
 
 template<typename T>
 std::set<T>
-directed_graph<T>::get_adjacent_nodes_values(const T &node_value) const {
+directed_graph<T>::get_adjacent_nodes_values(const T& node_value) const {
     auto iter{findNode(node_value)};
     if (iter == std::end(m_nodes)) { return std::set<T>{}; }
     return get_adjacent_nodes_values(iter->get_adjacent_nodes_indices());
@@ -480,7 +481,7 @@ directed_graph<T>::max_size() const noexcept {
 
 template<typename T>
 typename directed_graph<T>::iterator_adjacent_nodes
-directed_graph<T>::begin(const T &node_value) noexcept {
+directed_graph<T>::begin(const T& node_value) noexcept {
     auto iter{findNode(node_value)};
     if (iter == std::end(m_nodes)) {
         // Default-construct an end iterator, and return
@@ -492,7 +493,7 @@ directed_graph<T>::begin(const T &node_value) noexcept {
 
 template<typename T>
 typename directed_graph<T>::iterator_adjacent_nodes
-directed_graph<T>::end(const T &node_value) noexcept {
+directed_graph<T>::end(const T& node_value) noexcept {
     auto iter{findNode(node_value)};
     if (iter == std::end(m_nodes)) { return iterator_adjacent_nodes{}; }
     return iterator_adjacent_nodes{std::end(iter->get_adjacent_nodes_indices()),
@@ -501,7 +502,7 @@ directed_graph<T>::end(const T &node_value) noexcept {
 
 template<typename T>
 typename directed_graph<T>::const_iterator_adjacent_nodes
-directed_graph<T>::cbegin(const T &node_value) const noexcept {
+directed_graph<T>::cbegin(const T& node_value) const noexcept {
     auto iter{findNode(node_value)};
     if (iter == std::end(m_nodes)) {
         // Default-construct an end iterator, and return
@@ -513,7 +514,7 @@ directed_graph<T>::cbegin(const T &node_value) const noexcept {
 
 template<typename T>
 typename directed_graph<T>::const_iterator_adjacent_nodes
-directed_graph<T>::cend(const T &node_value) const noexcept {
+directed_graph<T>::cend(const T& node_value) const noexcept {
     auto iter{findNode(node_value)};
     if (iter == std::end(m_nodes)) { return const_iterator_adjacent_nodes{}; }
     return const_iterator_adjacent_nodes{
@@ -522,49 +523,49 @@ directed_graph<T>::cend(const T &node_value) const noexcept {
 
 template<typename T>
 typename directed_graph<T>::const_iterator_adjacent_nodes
-directed_graph<T>::begin(const T &node_value) const noexcept {
+directed_graph<T>::begin(const T& node_value) const noexcept {
     return cbegin(node_value);
 }
 
 template<typename T>
 typename directed_graph<T>::const_iterator_adjacent_nodes
-directed_graph<T>::end(const T &node_value) const noexcept {
+directed_graph<T>::end(const T& node_value) const noexcept {
     return cend(node_value);
 }
 
 template<typename T>
 typename directed_graph<T>::reverse_iterator_adjacent_nodes
-directed_graph<T>::rbegin(const T &node_value) noexcept {
+directed_graph<T>::rbegin(const T& node_value) noexcept {
     return reverse_iterator_adjacent_nodes{end(node_value)};
 }
 
 template<typename T>
 typename directed_graph<T>::reverse_iterator_adjacent_nodes
-directed_graph<T>::rend(const T &node_value) noexcept {
+directed_graph<T>::rend(const T& node_value) noexcept {
     return reverse_iterator_adjacent_nodes{begin(node_value)};
 }
 
 template<typename T>
 typename directed_graph<T>::const_reverse_iterator_adjacent_nodes
-directed_graph<T>::rbegin(const T &node_value) const noexcept {
+directed_graph<T>::rbegin(const T& node_value) const noexcept {
     return const_reverse_iterator_adjacent_nodes{end(node_value)};
 }
 
 template<typename T>
 typename directed_graph<T>::const_reverse_iterator_adjacent_nodes
-directed_graph<T>::rend(const T &node_value) const noexcept {
+directed_graph<T>::rend(const T& node_value) const noexcept {
     return const_reverse_iterator_adjacent_nodes{begin(node_value)};
 }
 
 template<typename T>
 typename directed_graph<T>::const_reverse_iterator_adjacent_nodes
-directed_graph<T>::crbegin(const T &node_value) const noexcept {
+directed_graph<T>::crbegin(const T& node_value) const noexcept {
     return rbegin(node_value);
 }
 
 template<typename T>
 typename directed_graph<T>::const_reverse_iterator_adjacent_nodes
-directed_graph<T>::crend(const T &node_value) const noexcept {
+directed_graph<T>::crend(const T& node_value) const noexcept {
     return rend(node_value);
 }
 
@@ -581,13 +582,13 @@ typename directed_graph<T>::iterator directed_graph<T>::end() noexcept {
 template<typename T>
 typename directed_graph<T>::const_iterator
 directed_graph<T>::begin() const noexcept {
-    return const_cast<directed_graph *>(this)->begin();
+    return const_cast<directed_graph*>(this)->begin();
 }
 
 template<typename T>
 typename directed_graph<T>::const_iterator
 directed_graph<T>::end() const noexcept {
-    return const_cast<directed_graph *>(this)->end();
+    return const_cast<directed_graph*>(this)->end();
 }
 
 template<typename T>
@@ -639,11 +640,11 @@ directed_graph<T>::crend() const noexcept {
 }
 
 template<typename T>
-std::wstring to_dot(const directed_graph<T> &graph,
+std::wstring to_dot(const directed_graph<T>& graph,
                     std::wstring_view graph_name) {
     std::wstringstream wss;
     wss << std::format(L"digraph {} {{", graph_name.data()) << std::endl;
-    for (auto &&node: graph) {
+    for (auto&& node: graph) {
         const auto b{graph.cbegin(node)};
         const auto e{graph.cend(node)};
         if (b == e) {
@@ -664,8 +665,8 @@ public:
     using value_type = typename DirectedGraph::value_type;
     using difference_type = ptrdiff_t;
     using iterator_category = std::bidirectional_iterator_tag;
-    using pointer = const value_type *;
-    using reference = const value_type &;
+    using pointer = const value_type*;
+    using reference = const value_type&;
     using iterator_type =
         typename DirectedGraph::nodes_container_type::const_iterator;
 
@@ -673,27 +674,27 @@ public:
     // so we can just default it.
     const_directed_graph_iterator() = default;
 
-    const_directed_graph_iterator(iterator_type it, const DirectedGraph *graph);
+    const_directed_graph_iterator(iterator_type it, const DirectedGraph* graph);
 
     reference operator*() const;
 
     pointer operator->() const;
 
-    const_directed_graph_iterator &operator++();
+    const_directed_graph_iterator& operator++();
 
     const_directed_graph_iterator operator++(int);
 
-    const_directed_graph_iterator &operator--();
+    const_directed_graph_iterator& operator--();
 
     const_directed_graph_iterator operator--(int);
 
-    bool operator==(const const_directed_graph_iterator &) const = default;
+    bool operator==(const const_directed_graph_iterator&) const = default;
 
 protected:
     friend class directed_graph<value_type>;
 
     iterator_type m_nodeIterator;
-    const DirectedGraph *m_graph{nullptr};
+    const DirectedGraph* m_graph{nullptr};
 
     // Helper methods for ++ and --
     void increment();
@@ -703,7 +704,7 @@ protected:
 
 template<typename DirectedGraph>
 const_directed_graph_iterator<DirectedGraph>::const_directed_graph_iterator(
-    iterator_type it, const DirectedGraph *graph)
+    iterator_type it, const DirectedGraph* graph)
     : m_nodeIterator{it}, m_graph{graph} {}
 
 template<typename DirectedGraph>
@@ -720,7 +721,7 @@ const_directed_graph_iterator<DirectedGraph>::operator->() const {
 
 // Defer details to the increment helper
 template<typename DirectedGraph>
-const_directed_graph_iterator<DirectedGraph> &
+const_directed_graph_iterator<DirectedGraph>&
 const_directed_graph_iterator<DirectedGraph>::operator++() {
     increment();
     return *this;
@@ -735,7 +736,7 @@ const_directed_graph_iterator<DirectedGraph>::operator++(int) {
 }
 
 template<typename DirectedGraph>
-const_directed_graph_iterator<DirectedGraph> &
+const_directed_graph_iterator<DirectedGraph>&
 const_directed_graph_iterator<DirectedGraph>::operator--() {
     decrement();
     return *this;
@@ -766,31 +767,31 @@ public:
     using value_type = DirectedGraph::value_type;
     using difference_type = ptrdiff_t;
     using iterator_category = std::bidirectional_iterator_tag;
-    using pointer = value_type *;
-    using reference = value_type &;
+    using pointer = value_type*;
+    using reference = value_type&;
     using iterator_type =
         typename DirectedGraph::nodes_container_type::iterator;
 
     directed_graph_iterator() = default;
 
-    directed_graph_iterator(iterator_type it, const DirectedGraph *graph);
+    directed_graph_iterator(iterator_type it, const DirectedGraph* graph);
 
     reference operator*();
 
     pointer operator->();
 
-    directed_graph_iterator &operator++();
+    directed_graph_iterator& operator++();
 
     directed_graph_iterator operator++(int);
 
-    directed_graph_iterator &operator--();
+    directed_graph_iterator& operator--();
 
     directed_graph_iterator operator--(int);
 };
 
 template<typename DirectedGraph>
 directed_graph_iterator<DirectedGraph>::directed_graph_iterator(
-    directed_graph_iterator::iterator_type it, const DirectedGraph *graph)
+    directed_graph_iterator::iterator_type it, const DirectedGraph* graph)
     : const_directed_graph_iterator<DirectedGraph>{it, graph} {}
 
 template<typename DirectedGraph>
@@ -806,7 +807,7 @@ directed_graph_iterator<DirectedGraph>::operator->() {
 }
 
 template<typename DirectedGraph>
-directed_graph_iterator<DirectedGraph> &
+directed_graph_iterator<DirectedGraph>&
 directed_graph_iterator<DirectedGraph>::operator++() {
     this->increment();
     return *this;
@@ -821,7 +822,7 @@ directed_graph_iterator<DirectedGraph>::operator++(int) {
 }
 
 template<typename DirectedGraph>
-directed_graph_iterator<DirectedGraph> &
+directed_graph_iterator<DirectedGraph>&
 directed_graph_iterator<DirectedGraph>::operator--() {
     this->decrement();
     return *this;
@@ -841,33 +842,33 @@ public:
     using value_type = typename GraphType::value_type;
     using difference_type = ptrdiff_t;
     using iterator_category = std::bidirectional_iterator_tag;
-    using pointer = const value_type *;
-    using reference = const value_type &;
+    using pointer = const value_type*;
+    using reference = const value_type&;
     using iterator_type = std::set<size_t>::const_iterator;
 
     // Bidirectional iterators need to provide a default constructor
     const_adjacent_nodes_iterator() = default;
 
     // No transfer of ownership
-    const_adjacent_nodes_iterator(iterator_type it, const GraphType *graph);
+    const_adjacent_nodes_iterator(iterator_type it, const GraphType* graph);
 
     reference operator*() const;
 
     // Return type must be something that -> can be applied to, so, a pointer
     pointer operator->() const;
 
-    const_adjacent_nodes_iterator &operator++();
+    const_adjacent_nodes_iterator& operator++();
     const_adjacent_nodes_iterator operator++(int);
 
-    const_adjacent_nodes_iterator &operator--();
+    const_adjacent_nodes_iterator& operator--();
     const_adjacent_nodes_iterator operator--(int);
 
-    bool operator==(const const_adjacent_nodes_iterator &rhs) const;
-    bool operator!=(const const_adjacent_nodes_iterator &rhs) const;
+    bool operator==(const const_adjacent_nodes_iterator& rhs) const;
+    bool operator!=(const const_adjacent_nodes_iterator& rhs) const;
 
 protected:
     iterator_type m_adjacentNodeIterator;
-    const GraphType *m_graph{nullptr};
+    const GraphType* m_graph{nullptr};
 
     void increment();
     void decrement();
@@ -875,7 +876,7 @@ protected:
 
 template<typename GraphType>
 const_adjacent_nodes_iterator<GraphType>::const_adjacent_nodes_iterator(
-    iterator_type it, const GraphType *graph)
+    iterator_type it, const GraphType* graph)
     : m_adjacentNodeIterator{it}, m_graph{graph} {}
 
 // Return a reference to the node.
@@ -893,7 +894,7 @@ const_adjacent_nodes_iterator<GraphType>::operator->() const {
 }
 
 template<typename GraphType>
-const_adjacent_nodes_iterator<GraphType> &
+const_adjacent_nodes_iterator<GraphType>&
 const_adjacent_nodes_iterator<GraphType>::operator++() {
     increment();
     return *this;
@@ -908,7 +909,7 @@ const_adjacent_nodes_iterator<GraphType>::operator++(int) {
 }
 
 template<typename GraphType>
-const_adjacent_nodes_iterator<GraphType> &
+const_adjacent_nodes_iterator<GraphType>&
 const_adjacent_nodes_iterator<GraphType>::operator--() {
     decrement();
     return *this;
@@ -935,7 +936,7 @@ void const_adjacent_nodes_iterator<GraphType>::decrement() {
 
 template<typename GraphType>
 bool const_adjacent_nodes_iterator<GraphType>::operator==(
-    const const_adjacent_nodes_iterator &rhs) const {
+    const const_adjacent_nodes_iterator& rhs) const {
     if (!m_graph && !rhs.m_graph) {
         // Both are end iterators
         return true;
@@ -946,7 +947,7 @@ bool const_adjacent_nodes_iterator<GraphType>::operator==(
 
 template<typename GraphType>
 bool const_adjacent_nodes_iterator<GraphType>::operator!=(
-    const const_adjacent_nodes_iterator &rhs) const {
+    const const_adjacent_nodes_iterator& rhs) const {
     return !(*this == rhs);
 }
 
@@ -958,26 +959,26 @@ public:
     using value_type = typename GraphType::value_type;
     using difference_type = ptrdiff_t;
     using iterator_category = std::bidirectional_iterator_tag;
-    using pointer = value_type *;
-    using reference = value_type &;
+    using pointer = value_type*;
+    using reference = value_type&;
     using iterator_type = std::set<size_t>::iterator;
 
     adjacent_nodes_iterator() = default;
 
-    adjacent_nodes_iterator(iterator_type it, const GraphType *graph);
+    adjacent_nodes_iterator(iterator_type it, const GraphType* graph);
 
     reference operator*();
     pointer operator->();
 
-    adjacent_nodes_iterator &operator++();
+    adjacent_nodes_iterator& operator++();
     adjacent_nodes_iterator operator++(int);
-    adjacent_nodes_iterator &operator--();
+    adjacent_nodes_iterator& operator--();
     adjacent_nodes_iterator operator--(int);
 };
 
 template<typename GraphType>
 adjacent_nodes_iterator<GraphType>::adjacent_nodes_iterator(
-    iterator_type it, const GraphType *graph)
+    iterator_type it, const GraphType* graph)
     : const_adjacent_nodes_iterator<GraphType>{it, graph} {}
 
 template<typename GraphType>
@@ -995,7 +996,7 @@ adjacent_nodes_iterator<GraphType>::operator->() {
 }
 
 template<typename GraphType>
-adjacent_nodes_iterator<GraphType> &
+adjacent_nodes_iterator<GraphType>&
 adjacent_nodes_iterator<GraphType>::operator++() {
     this->increment();
     return *this;
@@ -1010,7 +1011,7 @@ adjacent_nodes_iterator<GraphType>::operator++(int) {
 }
 
 template<typename GraphType>
-adjacent_nodes_iterator<GraphType> &
+adjacent_nodes_iterator<GraphType>&
 adjacent_nodes_iterator<GraphType>::operator--() {
     this->decrement();
     return *this;
