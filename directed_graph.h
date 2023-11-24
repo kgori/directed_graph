@@ -128,6 +128,25 @@ namespace details {
           m_data{std::exchange(src.m_data, nullptr)} {}
 
     template<typename T, typename A>
+    graph_node<T, A>& graph_node<T, A>::operator=(const graph_node& rhs) {
+        if (this != &rhs) {
+            m_graph = rhs.m_graph;
+            m_adjacentNodeIndices = rhs.m_adjacentNodeIndices;
+            m_data->~T();
+            new (m_data) T{*(rhs.m_data)};
+        }
+        return *this;
+    }
+
+    template<typename T, typename A>
+    graph_node<T, A>& graph_node<T, A>::operator=(graph_node&& rhs) noexcept {
+        m_graph = std::exchange(rhs.m_graph, nullptr);
+        m_adjacentNodeIndices = std::move(rhs.m_adjacentNodeIndices);
+        m_data = std::exchange(rhs.m_data, nullptr);
+        return *this;
+    }
+
+    template<typename T, typename A>
     T& graph_node<T, A>::value() noexcept {
         return *m_data;
     }
@@ -310,7 +329,7 @@ private:
     friend class const_directed_graph_iterator<directed_graph>;
     friend class directed_graph_iterator<directed_graph>;
 
-    using nodes_container_type = std::vector<details::graph_node<T>>;
+    using nodes_container_type = std::vector<details::graph_node<T, A>>;
 
     nodes_container_type m_nodes;
     A m_allocator;
@@ -336,7 +355,7 @@ private:
 
 // Stand-alone swap uses swap() method internally. I think this is provided
 // to better handle some ADL edge cases?
-template<typename A, typename T>
+template<typename T, typename A>
 void swap(directed_graph<T, A>& first, directed_graph<T, A>& second) noexcept {
     first.swap(second);
 }
@@ -576,9 +595,9 @@ directed_graph<T, A>::max_size() const noexcept {
     return m_nodes.max_size();
 }
 
-template<typename T>
-typename directed_graph<T>::iterator_adjacent_nodes
-directed_graph<T>::begin(const T& node_value) noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::iterator_adjacent_nodes
+directed_graph<T, A>::begin(const T& node_value) noexcept {
     auto iter{findNode(node_value)};
     if (iter == std::end(m_nodes)) {
         // Default-construct an end iterator, and return
@@ -588,18 +607,18 @@ directed_graph<T>::begin(const T& node_value) noexcept {
         std::begin(iter->get_adjacent_nodes_indices()), this};
 }
 
-template<typename T>
-typename directed_graph<T>::iterator_adjacent_nodes
-directed_graph<T>::end(const T& node_value) noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::iterator_adjacent_nodes
+directed_graph<T, A>::end(const T& node_value) noexcept {
     auto iter{findNode(node_value)};
     if (iter == std::end(m_nodes)) { return iterator_adjacent_nodes{}; }
     return iterator_adjacent_nodes{std::end(iter->get_adjacent_nodes_indices()),
                                    this};
 }
 
-template<typename T>
-typename directed_graph<T>::const_iterator_adjacent_nodes
-directed_graph<T>::cbegin(const T& node_value) const noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::const_iterator_adjacent_nodes
+directed_graph<T, A>::cbegin(const T& node_value) const noexcept {
     auto iter{findNode(node_value)};
     if (iter == std::end(m_nodes)) {
         // Default-construct an end iterator, and return
@@ -609,135 +628,135 @@ directed_graph<T>::cbegin(const T& node_value) const noexcept {
         std::begin(iter->get_adjacent_nodes_indices()), this};
 }
 
-template<typename T>
-typename directed_graph<T>::const_iterator_adjacent_nodes
-directed_graph<T>::cend(const T& node_value) const noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::const_iterator_adjacent_nodes
+directed_graph<T, A>::cend(const T& node_value) const noexcept {
     auto iter{findNode(node_value)};
     if (iter == std::end(m_nodes)) { return const_iterator_adjacent_nodes{}; }
     return const_iterator_adjacent_nodes{
         std::end(iter->get_adjacent_nodes_indices()), this};
 }
 
-template<typename T>
-typename directed_graph<T>::const_iterator_adjacent_nodes
-directed_graph<T>::begin(const T& node_value) const noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::const_iterator_adjacent_nodes
+directed_graph<T, A>::begin(const T& node_value) const noexcept {
     return cbegin(node_value);
 }
 
-template<typename T>
-typename directed_graph<T>::const_iterator_adjacent_nodes
-directed_graph<T>::end(const T& node_value) const noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::const_iterator_adjacent_nodes
+directed_graph<T, A>::end(const T& node_value) const noexcept {
     return cend(node_value);
 }
 
-template<typename T>
-typename directed_graph<T>::reverse_iterator_adjacent_nodes
-directed_graph<T>::rbegin(const T& node_value) noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::reverse_iterator_adjacent_nodes
+directed_graph<T, A>::rbegin(const T& node_value) noexcept {
     return reverse_iterator_adjacent_nodes{end(node_value)};
 }
 
-template<typename T>
-typename directed_graph<T>::reverse_iterator_adjacent_nodes
-directed_graph<T>::rend(const T& node_value) noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::reverse_iterator_adjacent_nodes
+directed_graph<T, A>::rend(const T& node_value) noexcept {
     return reverse_iterator_adjacent_nodes{begin(node_value)};
 }
 
-template<typename T>
-typename directed_graph<T>::const_reverse_iterator_adjacent_nodes
-directed_graph<T>::rbegin(const T& node_value) const noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::const_reverse_iterator_adjacent_nodes
+directed_graph<T, A>::rbegin(const T& node_value) const noexcept {
     return const_reverse_iterator_adjacent_nodes{end(node_value)};
 }
 
-template<typename T>
-typename directed_graph<T>::const_reverse_iterator_adjacent_nodes
-directed_graph<T>::rend(const T& node_value) const noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::const_reverse_iterator_adjacent_nodes
+directed_graph<T, A>::rend(const T& node_value) const noexcept {
     return const_reverse_iterator_adjacent_nodes{begin(node_value)};
 }
 
-template<typename T>
-typename directed_graph<T>::const_reverse_iterator_adjacent_nodes
-directed_graph<T>::crbegin(const T& node_value) const noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::const_reverse_iterator_adjacent_nodes
+directed_graph<T, A>::crbegin(const T& node_value) const noexcept {
     return rbegin(node_value);
 }
 
-template<typename T>
-typename directed_graph<T>::const_reverse_iterator_adjacent_nodes
-directed_graph<T>::crend(const T& node_value) const noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::const_reverse_iterator_adjacent_nodes
+directed_graph<T, A>::crend(const T& node_value) const noexcept {
     return rend(node_value);
 }
 
-template<typename T>
-typename directed_graph<T>::iterator directed_graph<T>::begin() noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::iterator directed_graph<T, A>::begin() noexcept {
     return iterator{std::begin(m_nodes), this};
 }
 
-template<typename T>
-typename directed_graph<T>::iterator directed_graph<T>::end() noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::iterator directed_graph<T, A>::end() noexcept {
     return iterator{std::end(m_nodes), this};
 }
 
-template<typename T>
-typename directed_graph<T>::const_iterator
-directed_graph<T>::begin() const noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::const_iterator
+directed_graph<T, A>::begin() const noexcept {
     return const_cast<directed_graph*>(this)->begin();
 }
 
-template<typename T>
-typename directed_graph<T>::const_iterator
-directed_graph<T>::end() const noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::const_iterator
+directed_graph<T, A>::end() const noexcept {
     return const_cast<directed_graph*>(this)->end();
 }
 
-template<typename T>
-typename directed_graph<T>::const_iterator
-directed_graph<T>::cbegin() const noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::const_iterator
+directed_graph<T, A>::cbegin() const noexcept {
     return begin();
 }
 
-template<typename T>
-typename directed_graph<T>::const_iterator
-directed_graph<T>::cend() const noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::const_iterator
+directed_graph<T, A>::cend() const noexcept {
     return end();
 }
 
-template<typename T>
-typename directed_graph<T>::reverse_iterator
-directed_graph<T>::rbegin() noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::reverse_iterator
+directed_graph<T, A>::rbegin() noexcept {
     return reverse_iterator{end()};
 }
 
-template<typename T>
-typename directed_graph<T>::reverse_iterator
-directed_graph<T>::rend() noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::reverse_iterator
+directed_graph<T, A>::rend() noexcept {
     return reverse_iterator{begin()};
 }
 
-template<typename T>
-typename directed_graph<T>::const_reverse_iterator
-directed_graph<T>::rbegin() const noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::const_reverse_iterator
+directed_graph<T, A>::rbegin() const noexcept {
     return const_reverse_iterator{end()};
 }
 
-template<typename T>
-typename directed_graph<T>::const_reverse_iterator
-directed_graph<T>::rend() const noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::const_reverse_iterator
+directed_graph<T, A>::rend() const noexcept {
     return const_reverse_iterator{begin()};
 }
 
-template<typename T>
-typename directed_graph<T>::const_reverse_iterator
-directed_graph<T>::crbegin() const noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::const_reverse_iterator
+directed_graph<T, A>::crbegin() const noexcept {
     return rbegin();
 }
 
-template<typename T>
-typename directed_graph<T>::const_reverse_iterator
-directed_graph<T>::crend() const noexcept {
+template<typename T, typename A>
+typename directed_graph<T, A>::const_reverse_iterator
+directed_graph<T, A>::crend() const noexcept {
     return rend();
 }
 
-template<typename T>
-std::wstring to_dot(const directed_graph<T>& graph,
+template<typename T, typename A>
+std::wstring to_dot(const directed_graph<T, A>& graph,
                     std::wstring_view graph_name) {
     std::wstringstream wss;
     wss << std::format(L"digraph {} {{", graph_name.data()) << std::endl;
