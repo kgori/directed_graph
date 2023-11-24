@@ -10,7 +10,7 @@
 #include <sstream>
 #include <vector>
 
-template<typename T>
+template<typename T, typename A>
 class directed_graph;
 
 template<typename DirectedGraph>
@@ -55,8 +55,8 @@ namespace details {
 
         [[nodiscard]] const T& value() const noexcept;
 
-        // C++20 defaulted equality comparison
-        bool operator==(const graph_node&) const = default;
+        bool operator==(const graph_node& rhs) const;
+        bool operator!=(const graph_node& rhs) const;
 
     private:
         friend class directed_graph<T, A>;
@@ -78,46 +78,105 @@ namespace details {
         adjacency_list_type m_adjacentNodeIndices;
     };
 
-    template<typename T>
-    graph_node<T>::graph_node(directed_graph<T>* graph, const T& t)
-        : m_graph{graph}, m_data{t} {}
-
-    template<typename T>
-    graph_node<T>::graph_node(directed_graph<T>* graph, T&& t)
-        : m_graph{graph}, m_data{std::move(t)} {}
-
-    template<typename T>
-    T& graph_node<T>::value() noexcept {
-        return m_data;
+    template<typename T, typename A>
+    graph_node<T, A>::graph_node(directed_graph<T, A>* graph, const T& t,
+                                 const A& allocator)
+        : m_graph{graph}, m_allocator{allocator} {
+        m_data = m_allocator.allocate(1);
+        new (m_data) T{t};// Placement new
     }
 
-    template<typename T>
-    const T& graph_node<T>::value() const noexcept {
-        return m_data;
+    template<typename T, typename A>
+    graph_node<T, A>::graph_node(directed_graph<T, A>* graph, T&& t,
+                                 const A& allocator)
+        : m_graph{graph}, m_allocator{allocator} {
+        m_data = m_allocator.allocate(1);
+        new (m_data) T{std::move(t)};
+    }
+
+    template<typename T, typename A>
+    graph_node<T, A>::graph_node(directed_graph<T, A>* graph, const T& t)
+        : graph_node<T, A>{graph, t, A{}} {}
+
+    template<typename T, typename A>
+    graph_node<T, A>::graph_node(directed_graph<T, A>* graph, T&& t)
+        : graph_node<T, A>{graph, std::move(t), A{}} {}
+
+    // destructor required - memory management gets a little hairy now allocators are involved
+    template<typename T, typename A>
+    graph_node<T, A>::~graph_node() {
+        if (m_data) {
+            m_data->~T();
+            m_allocator.deallocate(m_data, 1);
+            m_data = nullptr;
+        }
+    }
+
+    template<typename T, typename A>
+    graph_node<T, A>::graph_node(const graph_node& src)
+        : m_allocator{src.m_allocator}, m_graph{src.m_graph},
+          m_adjacentNodeIndices{src.m_adjacentNodeIndices} {
+        m_data = m_allocator.allocate(1);
+        new (m_data) T{*(src.m_data)};
+    }
+
+    template<typename T, typename A>
+    graph_node<T, A>::graph_node(graph_node&& src) noexcept
+        : m_allocator{std::move(src.m_allocator)},
+          m_graph{std::exchange(src.m_graph, nullptr)},
+          m_adjacentNodeIndices{std::move(src.m_adjacentNodeIndices)},
+          m_data{std::exchange(src.m_data, nullptr)} {}
+
+    template<typename T, typename A>
+    T& graph_node<T, A>::value() noexcept {
+        return *m_data;
+    }
+
+    template<typename T, typename A>
+    const T& graph_node<T, A>::value() const noexcept {
+        return *m_data;
     };
 
-    template<typename T>
-    typename graph_node<T>::adjacency_list_type&
-    graph_node<T>::get_adjacent_nodes_indices() {
+    template<typename T, typename A>
+    bool graph_node<T, A>::operator==(const graph_node& rhs) const {
+        return m_graph == rhs.m_graph && *m_data == *(rhs.m_data) &&
+               m_adjacentNodeIndices == rhs.m_adjacentNodeIndices;
+    }
+
+    template<typename T, typename A>
+    bool graph_node<T, A>::operator!=(const graph_node& rhs) const {
+        return !(*this == rhs);
+    }
+
+    template<typename T, typename A>
+    typename graph_node<T, A>::adjacency_list_type&
+    graph_node<T, A>::get_adjacent_nodes_indices() {
         return m_adjacentNodeIndices;
     }
 
-    template<typename T>
-    const typename graph_node<T>::adjacency_list_type&
-    graph_node<T>::get_adjacent_nodes_indices() const {
+    template<typename T, typename A>
+    const typename graph_node<T, A>::adjacency_list_type&
+    graph_node<T, A>::get_adjacent_nodes_indices() const {
         return m_adjacentNodeIndices;
     }
 }// namespace details
 
-template<typename T>
+template<typename T, typename A = std::allocator<T>>
 class directed_graph {
 public:
     // Necessary type aliases for directed_graph to function as an STL container
     using value_type = T;
+    using allocator_type = A;
     using reference = value_type&;
     using const_reference = const value_type&;
     using size_type = size_t;
     using difference_type = ptrdiff_t;
+
+    // Constructors
+    // Let the compiler default the default constructor, but make it noexcept
+    // iff the allocator's default constructor is also noexcept
+    directed_graph() noexcept(noexcept(A{})) = default;
+    explicit directed_graph(const A& allocator) noexcept;
 
     // Aliases required for iterator support - both are const_ on purpose,
     // to be like std::set in disallowing modification of elements (and
