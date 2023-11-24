@@ -302,7 +302,7 @@ public:
 
     // Returns a set with the values of the nodes connected to the node with
     // node_value
-    [[nodiscard]] std::set<T, std::less, A>
+    [[nodiscard]] std::set<T, std::less<>, A>
     get_adjacent_nodes_values(const T& node_value) const;
 
 private:
@@ -329,8 +329,8 @@ private:
     void remove_all_links_to(
         typename nodes_container_type::const_iterator node_iter);
 
-    [[nodiscard]] std::set<T, std::less, A> get_adjacent_nodes_values(
-        const typename details::graph_node<T>::adjacency_list_type& indices)
+    [[nodiscard]] std::set<T, std::less<>, A> get_adjacent_nodes_values(
+        const typename details::graph_node<T, A>::adjacency_list_type& indices)
         const;
 };
 
@@ -367,7 +367,7 @@ directed_graph<T, A>::insert(T&& node_value) {
         // Value is already in the graph
         return {iterator{iter, this}, false};
     }
-    m_nodes.emplace_back(this, std::move(node_value));
+    m_nodes.emplace_back(this, std::move(node_value), m_allocator);
     return {iterator{--std::end(m_nodes), this}, true};
 }
 
@@ -490,7 +490,9 @@ void directed_graph<T, A>::clear() noexcept {
 
 template<typename T, typename A>
 void directed_graph<T, A>::swap(directed_graph& other_graph) noexcept {
+    using std::swap;
     m_nodes.swap(other_graph.m_nodes);
+    swap(m_allocator, other_graph.m_allocator);
 }
 
 template<typename T, typename A>
@@ -534,25 +536,25 @@ bool directed_graph<T, A>::operator==(const directed_graph& rhs) const {
 }
 
 template<typename T, typename A>
-std::set<T, std::less, A> directed_graph<T, A>::get_adjacent_nodes_values(
+std::set<T, std::less<>, A> directed_graph<T, A>::get_adjacent_nodes_values(
     const typename details::graph_node<T, A>::adjacency_list_type& indices)
     const {
-    std::set<T, std::less, A> values(m_allocator);
+    std::set<T, std::less<>, A> values(m_allocator);
     for (auto&& index: indices) { values.insert(m_nodes[index].value()); }
     return values;
 }
 
 template<typename T, typename A>
-bool directed_graph<T, A>::operator!=(const directed_graph<T>& rhs) const {
+bool directed_graph<T, A>::operator!=(const directed_graph<T, A>& rhs) const {
     return !(*this == rhs);
 }
 
 template<typename T, typename A>
-std::set<T, std::less, A>
+std::set<T, std::less<>, A>
 directed_graph<T, A>::get_adjacent_nodes_values(const T& node_value) const {
     auto iter{findNode(node_value)};
     if (iter == std::end(m_nodes)) {
-        return std::set<T, std::less, A>{m_allocator};
+        return std::set<T, std::less<>, A>{m_allocator};
     }
     return get_adjacent_nodes_values(iter->get_adjacent_nodes_indices());
 }
