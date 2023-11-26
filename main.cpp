@@ -1,4 +1,5 @@
 #include "directed_graph.h"
+#include "weighted_directed_graph.h"
 #include <iostream>
 
 struct Point {
@@ -16,7 +17,7 @@ std::ostream& operator<<(std::ostream& os, const Point p) {
 }
 
 int main() {
-    directed_graph<int> graph;
+    weighted_directed_graph<int> graph;
     // Insert some nodes and edges.
     graph.insert(11);
     graph.insert(22);
@@ -25,17 +26,17 @@ int main() {
     graph.insert(55);
     graph.insert(66);
     graph.insert(77);
-    graph.insert_edge(11, 33);
-    graph.insert_edge(11, 77);
-    graph.insert_edge(22, 33);
-    graph.insert_edge(22, 44);
-    graph.insert_edge(22, 55);
-    graph.insert_edge(22, 66);
-    graph.insert_edge(33, 44);
-    graph.insert_edge(33, 77);
-    graph.insert_edge(44, 55);
-    graph.insert_edge(44, 66);
-    graph.insert_edge(44, 77);
+    graph.insert_edge(11, 33, .1);
+    graph.insert_edge(11, 77, .2);
+    graph.insert_edge(22, 33, .3);
+    graph.insert_edge(22, 44, .4);
+    graph.insert_edge(22, 55, .5);
+    graph.insert_edge(22, 66, .6);
+    graph.insert_edge(33, 44, .7);
+    graph.insert_edge(33, 77, .8);
+    graph.insert_edge(44, 55, .9);
+    graph.insert_edge(44, 66, 1.0);
+    graph.insert_edge(44, 77, 1.1);
     std::wcout << to_dot(graph, L"Graph1");
 
     // Remove an edge and a node.
@@ -47,10 +48,10 @@ int main() {
     std::cout << "Size: " << graph.size() << std::endl;
 
     // Try to insert a node
-    auto [_, inserted]{graph.insert(2002)};
+    auto [_, inserted]{ graph.insert(2002) };
     if (!inserted) { std::cout << "Duplicate element!\n"; }
 
-    for (auto iter{graph.cbegin()}; iter != graph.cend(); ++iter) {
+    for (auto iter{ graph.cbegin() }; iter != graph.cend(); ++iter) {
         std::cout << *iter << " ";
     }
     std::cout << std::endl;
@@ -58,32 +59,32 @@ int main() {
     for (auto& node: graph) { std::cout << node << std::endl; }
     std::cout << std::endl;
 
-    auto result{std::find(std::begin(graph), std::end(graph), 33)};
+    auto result{ std::find(std::begin(graph), std::end(graph), 33) };
     if (result != std::end(graph)) {
         std::cout << "Found " << *result << std::endl;
     } else {
         std::cout << "Not found!" << std::endl;
     }
 
-    auto count{std::count_if(std::begin(graph), std::end(graph),
-                             [](const auto& node) { return node > 22; })};
+    auto count{ std::count_if(std::begin(graph), std::end(graph),
+                              [](const auto& node) { return node > 22; }) };
     std::cout << count << std::endl;
 
-    for (auto iter{graph.rbegin()}; iter != graph.rend(); ++iter) {
+    for (auto iter{ graph.rbegin() }; iter != graph.rend(); ++iter) {
         std::cout << *iter << " ";
     }
     std::cout << std::endl;
 
     std::cout << "Adjacency list for node 22: ";
 
-    auto iterBegin{graph.cbegin(22)};
-    auto iterEnd{graph.cend(22)};
+    auto iterBegin{ graph.cbegin(22) };
+    auto iterEnd{ graph.cend(22) };
 
     if (iterBegin == iterEnd) {
         std::cout << "Value 22 not found." << std::endl;
         std::cout << std::boolalpha << (iterBegin == iterEnd) << '\n';
     } else {
-        for (auto iter{iterBegin}; iter != iterEnd; ++iter) {
+        for (auto iter{ iterBegin }; iter != iterEnd; ++iter) {
             std::cout << *iter << " ";
         }
     }
