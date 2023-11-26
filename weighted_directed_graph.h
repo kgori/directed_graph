@@ -10,7 +10,7 @@
 #include <sstream>
 #include <vector>
 
-template<typename T, typename W, typename A>
+template<typename T, typename A>
 class weighted_directed_graph;
 
 template<typename GraphType>
@@ -75,19 +75,18 @@ namespace details {
         m_data = nullptr;
     }
 
-    template<typename T, typename W = int, typename A = std::allocator<T>>
+    template<typename T, typename A = std::allocator<T>>
     class weighted_graph_node : private weighted_graph_node_allocator<T, A> {
     public:
         // Constructors
-        weighted_graph_node(weighted_directed_graph<T, W, A>& graph,
-                            const T& t);
+        weighted_graph_node(weighted_directed_graph<T, A>& graph, const T& t);
 
-        weighted_graph_node(weighted_directed_graph<T, W, A>& graph, T&& t);
+        weighted_graph_node(weighted_directed_graph<T, A>& graph, T&& t);
 
-        weighted_graph_node(weighted_directed_graph<T, W, A>& graph, const T& t,
+        weighted_graph_node(weighted_directed_graph<T, A>& graph, const T& t,
                             const A& allocator);
 
-        weighted_graph_node(weighted_directed_graph<T, W, A>& graph, T&& t,
+        weighted_graph_node(weighted_directed_graph<T, A>& graph, T&& t,
                             const A& allocator);
 
         ~weighted_graph_node();
@@ -111,10 +110,10 @@ namespace details {
         bool operator!=(const weighted_graph_node& rhs) const;
 
     private:
-        friend class weighted_directed_graph<T, W, A>;
+        friend class weighted_directed_graph<T, A>;
 
         // A reference to the graph this node belongs to
-        weighted_directed_graph<T, W, A>& m_graph;
+        weighted_directed_graph<T, A>& m_graph;
 
         // Type alias for the container type used to store nodes
         using adjacency_list_type = std::set<details::graph_edge>;
@@ -128,38 +127,38 @@ namespace details {
         adjacency_list_type m_adjacentNodeIndices;
     };
 
-    template<typename T, typename W, typename A>
-    weighted_graph_node<T, W, A>::weighted_graph_node(
-        weighted_directed_graph<T, W, A>& graph, const T& t, const A& allocator)
+    template<typename T, typename A>
+    weighted_graph_node<T, A>::weighted_graph_node(
+        weighted_directed_graph<T, A>& graph, const T& t, const A& allocator)
         : m_graph{ graph }, weighted_graph_node_allocator<T, A>{ allocator } {
         new (this->m_data) T{ t };// Placement new
     }
 
-    template<typename T, typename W, typename A>
-    weighted_graph_node<T, W, A>::weighted_graph_node(
-        weighted_directed_graph<T, W, A>& graph, T&& t, const A& allocator)
+    template<typename T, typename A>
+    weighted_graph_node<T, A>::weighted_graph_node(
+        weighted_directed_graph<T, A>& graph, T&& t, const A& allocator)
         : m_graph{ graph }, weighted_graph_node_allocator<T, A>{ allocator } {
         new (this->m_data) T{ std::move(t) };
     }
 
-    template<typename T, typename W, typename A>
-    weighted_graph_node<T, W, A>::weighted_graph_node(
-        weighted_directed_graph<T, W, A>& graph, const T& t)
-        : weighted_graph_node<T, W, A>{ graph, t, A{} } {}
+    template<typename T, typename A>
+    weighted_graph_node<T, A>::weighted_graph_node(
+        weighted_directed_graph<T, A>& graph, const T& t)
+        : weighted_graph_node<T, A>{ graph, t, A{} } {}
 
-    template<typename T, typename W, typename A>
-    weighted_graph_node<T, W, A>::weighted_graph_node(
-        weighted_directed_graph<T, W, A>& graph, T&& t)
-        : weighted_graph_node<T, W, A>{ graph, std::move(t), A{} } {}
+    template<typename T, typename A>
+    weighted_graph_node<T, A>::weighted_graph_node(
+        weighted_directed_graph<T, A>& graph, T&& t)
+        : weighted_graph_node<T, A>{ graph, std::move(t), A{} } {}
 
     // destructor required - memory management gets a little hairy now allocators are involved
-    template<typename T, typename W, typename A>
-    weighted_graph_node<T, W, A>::~weighted_graph_node() {
+    template<typename T, typename A>
+    weighted_graph_node<T, A>::~weighted_graph_node() {
         if (this->m_data) { this->m_data->~T(); }
     }
 
-    template<typename T, typename W, typename A>
-    weighted_graph_node<T, W, A>::weighted_graph_node(
+    template<typename T, typename A>
+    weighted_graph_node<T, A>::weighted_graph_node(
         const weighted_graph_node& src)
         : weighted_graph_node_allocator<T, A>{ src.m_allocator },
           m_graph{ src.m_graph },
@@ -167,16 +166,16 @@ namespace details {
         new (this->m_data) T{ *(src.m_data) };
     }
 
-    template<typename T, typename W, typename A>
-    weighted_graph_node<T, W, A>::weighted_graph_node(
+    template<typename T, typename A>
+    weighted_graph_node<T, A>::weighted_graph_node(
         weighted_graph_node&& src) noexcept
         : weighted_graph_node_allocator<T, A>{ std::move(src) },
           m_graph{ src.m_graph },
           m_adjacentNodeIndices{ std::move(src.m_adjacentNodeIndices) } {}
 
-    template<typename T, typename W, typename A>
-    weighted_graph_node<T, W, A>&
-    weighted_graph_node<T, W, A>::operator=(const weighted_graph_node& rhs) {
+    template<typename T, typename A>
+    weighted_graph_node<T, A>&
+    weighted_graph_node<T, A>::operator=(const weighted_graph_node& rhs) {
         if (this != &rhs) {
             m_graph = rhs.m_graph;
             m_adjacentNodeIndices = rhs.m_adjacentNodeIndices;
@@ -185,47 +184,47 @@ namespace details {
         return *this;
     }
 
-    template<typename T, typename W, typename A>
-    weighted_graph_node<T, W, A>& weighted_graph_node<T, W, A>::operator=(
-        weighted_graph_node&& rhs) noexcept {
+    template<typename T, typename A>
+    weighted_graph_node<T, A>&
+    weighted_graph_node<T, A>::operator=(weighted_graph_node&& rhs) noexcept {
         m_graph = rhs.m_graph;
         m_adjacentNodeIndices = std::move(rhs.m_adjacentNodeIndices);
         this->m_data = std::exchange(rhs.m_data, nullptr);
         return *this;
     }
 
-    template<typename T, typename W, typename A>
-    T& weighted_graph_node<T, W, A>::value() noexcept {
+    template<typename T, typename A>
+    T& weighted_graph_node<T, A>::value() noexcept {
         return *(this->m_data);
     }
 
-    template<typename T, typename W, typename A>
-    const T& weighted_graph_node<T, W, A>::value() const noexcept {
+    template<typename T, typename A>
+    const T& weighted_graph_node<T, A>::value() const noexcept {
         return *(this->m_data);
     };
 
-    template<typename T, typename W, typename A>
-    bool weighted_graph_node<T, W, A>::operator==(
+    template<typename T, typename A>
+    bool weighted_graph_node<T, A>::operator==(
         const weighted_graph_node& rhs) const {
         return &m_graph == &rhs.m_graph && *(this->m_data) == *(rhs.m_data) &&
                m_adjacentNodeIndices == rhs.m_adjacentNodeIndices;
     }
 
-    template<typename T, typename W, typename A>
-    bool weighted_graph_node<T, W, A>::operator!=(
+    template<typename T, typename A>
+    bool weighted_graph_node<T, A>::operator!=(
         const weighted_graph_node& rhs) const {
         return !(*this == rhs);
     }
 
-    template<typename T, typename W, typename A>
-    typename weighted_graph_node<T, W, A>::adjacency_list_type&
-    weighted_graph_node<T, W, A>::get_adjacent_nodes_indices() {
+    template<typename T, typename A>
+    typename weighted_graph_node<T, A>::adjacency_list_type&
+    weighted_graph_node<T, A>::get_adjacent_nodes_indices() {
         return m_adjacentNodeIndices;
     }
 
-    template<typename T, typename W, typename A>
-    const typename weighted_graph_node<T, W, A>::adjacency_list_type&
-    weighted_graph_node<T, W, A>::get_adjacent_nodes_indices() const {
+    template<typename T, typename A>
+    const typename weighted_graph_node<T, A>::adjacency_list_type&
+    weighted_graph_node<T, A>::get_adjacent_nodes_indices() const {
         return m_adjacentNodeIndices;
     }
 
@@ -248,7 +247,7 @@ namespace details {
     };
 }// namespace details
 
-template<typename T, typename W = int, typename A = std::allocator<T>>
+template<typename T, typename A = std::allocator<T>>
 class weighted_directed_graph {
 public:
     // Necessary type aliases for weighted_directed_graph to function as an STL container
@@ -280,6 +279,11 @@ public:
         std::reverse_iterator<iterator_adjacent_nodes>;
     using const_reverse_iterator_adjacent_nodes =
         std::reverse_iterator<const_iterator_adjacent_nodes>;
+
+    // debug aliases
+    using public_node_type = details::weighted_graph_node<T, A>;
+    using public_nodes_container_type =
+        std::vector<details::weighted_graph_node<T, A>>;
 
     // Iterator methods
     iterator begin() noexcept;
@@ -391,16 +395,16 @@ public:
 
     // Returns a set with the values of the nodes connected to the node with
     // node_value
-    [[nodiscard]] std::map<T, W, std::less<>, A>
+    [[nodiscard]] std::map<T, std::less<>, A>
     get_adjacent_nodes_values(const T& node_value) const;
 
 private:
-    friend class details::weighted_graph_node<T, W, A>;
+    friend class details::weighted_graph_node<T, A>;
     friend class const_graph_iterator<weighted_directed_graph>;
     friend class graph_iterator<weighted_directed_graph>;
 
     using nodes_container_type =
-        std::vector<details::weighted_graph_node<T, W, A>>;
+        std::vector<details::weighted_graph_node<T, A>>;
 
     nodes_container_type m_nodes;
     A m_allocator;
@@ -419,42 +423,42 @@ private:
     void remove_all_links_to(
         typename nodes_container_type::const_iterator node_iter);
 
-    [[nodiscard]] std::map<T, W, std::less<>, A>
-    get_adjacent_nodes_values(const typename details::weighted_graph_node<
-                              T, W, A>::adjacency_list_type& indices) const;
+    [[nodiscard]] std::map<T, std::less<>, A> get_adjacent_nodes_values(
+        const typename details::weighted_graph_node<T, A>::adjacency_list_type&
+            indices) const;
 };
 
 // Stand-alone swap uses swap() method internally. I think this is provided
 // to better handle some ADL edge cases?
-template<typename T, typename W, typename A>
-void swap(weighted_directed_graph<T, W, A>& first,
-          weighted_directed_graph<T, W, A>& second) noexcept {
+template<typename T, typename A>
+void swap(weighted_directed_graph<T, A>& first,
+          weighted_directed_graph<T, A>& second) noexcept {
     first.swap(second);
 }
 
-template<typename T, typename W, typename A>
-weighted_directed_graph<T, W, A>::weighted_directed_graph(
+template<typename T, typename A>
+weighted_directed_graph<T, A>::weighted_directed_graph(
     const A& allocator) noexcept
     : m_nodes{ allocator }, m_allocator{ allocator } {}
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::nodes_container_type::iterator
-weighted_directed_graph<T, W, A>::findNode(const T& node_value) {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::nodes_container_type::iterator
+weighted_directed_graph<T, A>::findNode(const T& node_value) {
     return std::find_if(
         std::begin(m_nodes), std::end(m_nodes),
         [&node_value](const auto& node) { return node.value() == node_value; });
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::nodes_container_type::const_iterator
-weighted_directed_graph<T, W, A>::findNode(const T& node_value) const {
-    return const_cast<weighted_directed_graph<T, W, A>*>(this)->findNode(
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::nodes_container_type::const_iterator
+weighted_directed_graph<T, A>::findNode(const T& node_value) const {
+    return const_cast<weighted_directed_graph<T, A>*>(this)->findNode(
         node_value);
 }
 
-template<typename T, typename W, typename A>
-std::pair<typename weighted_directed_graph<T, W, A>::iterator, bool>
-weighted_directed_graph<T, W, A>::insert(T&& node_value) {
+template<typename T, typename A>
+std::pair<typename weighted_directed_graph<T, A>::iterator, bool>
+weighted_directed_graph<T, A>::insert(T&& node_value) {
     auto iter{ findNode(node_value) };
     if (iter != std::end(m_nodes)) {
         // Value is already in the graph
@@ -464,39 +468,39 @@ weighted_directed_graph<T, W, A>::insert(T&& node_value) {
     return { iterator{ --std::end(m_nodes), this }, true };
 }
 
-template<typename T, typename W, typename A>
-std::pair<typename weighted_directed_graph<T, W, A>::iterator, bool>
-weighted_directed_graph<T, W, A>::insert(const T& node_value) {
+template<typename T, typename A>
+std::pair<typename weighted_directed_graph<T, A>::iterator, bool>
+weighted_directed_graph<T, A>::insert(const T& node_value) {
     T copy{ node_value };
     return insert(std::move(copy));
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::iterator
-weighted_directed_graph<T, W, A>::insert(const_iterator hint, T&& node_value) {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::iterator
+weighted_directed_graph<T, A>::insert(const_iterator hint, T&& node_value) {
     // Ignore the hint, just forward to standard insert.
     return insert(node_value).first;
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::iterator
-weighted_directed_graph<T, W, A>::insert(const_iterator hint,
-                                         const T& node_value) {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::iterator
+weighted_directed_graph<T, A>::insert(const_iterator hint,
+                                      const T& node_value) {
     return insert(node_value).first;
 }
 
 // Nested templates - can't use template<typename T, typename Iter>
-template<typename T, typename W, typename A>
+template<typename T, typename A>
 template<typename Iter>
-void weighted_directed_graph<T, W, A>::insert(Iter first, Iter last) {
+void weighted_directed_graph<T, A>::insert(Iter first, Iter last) {
     // Copy each element in the range by using an insert_iterator
     std::copy(first, last, std::insert_iterator{ *this, begin() });
 }
 
-template<typename T, typename W, typename A>
-bool weighted_directed_graph<T, W, A>::insert_edge(const T& from_node_value,
-                                                   const T& to_node_value,
-                                                   double weight) {
+template<typename T, typename A>
+bool weighted_directed_graph<T, A>::insert_edge(const T& from_node_value,
+                                                const T& to_node_value,
+                                                double weight) {
     const auto from{ findNode(from_node_value) };
     const auto to{ findNode(to_node_value) };
     if (from == std::end(m_nodes) || to == std::end(m_nodes)) { return false; }
@@ -506,15 +510,15 @@ bool weighted_directed_graph<T, W, A>::insert_edge(const T& from_node_value,
         .second;
 }
 
-template<typename T, typename W, typename A>
-size_t weighted_directed_graph<T, W, A>::get_index_of_node(
+template<typename T, typename A>
+size_t weighted_directed_graph<T, A>::get_index_of_node(
     const typename nodes_container_type::const_iterator& node) const noexcept {
     const auto index{ std::distance(std::cbegin(m_nodes), node) };
     return static_cast<size_t>(index);
 }
 
-template<typename T, typename W, typename A>
-void weighted_directed_graph<T, W, A>::remove_all_links_to(
+template<typename T, typename A>
+void weighted_directed_graph<T, A>::remove_all_links_to(
     typename nodes_container_type::const_iterator node_iter) {
     const size_t node_index{ get_index_of_node(node_iter) };
 
@@ -541,8 +545,8 @@ void weighted_directed_graph<T, W, A>::remove_all_links_to(
     }
 }
 
-template<typename T, typename W, typename A>
-bool weighted_directed_graph<T, W, A>::erase(const T& node_value) {
+template<typename T, typename A>
+bool weighted_directed_graph<T, A>::erase(const T& node_value) {
     auto iter{ findNode(node_value) };
     if (iter == std::end(m_nodes)) { return false; }
     remove_all_links_to(iter);
@@ -550,9 +554,9 @@ bool weighted_directed_graph<T, W, A>::erase(const T& node_value) {
     return true;
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::iterator
-weighted_directed_graph<T, W, A>::erase(const_iterator pos) {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::iterator
+weighted_directed_graph<T, A>::erase(const_iterator pos) {
     if (pos.m_nodeIterator == std::end(m_nodes)) {
         return iterator{ std::end(m_nodes), this };
     }
@@ -560,10 +564,10 @@ weighted_directed_graph<T, W, A>::erase(const_iterator pos) {
     return iterator{ m_nodes.erase(pos.m_nodeIterator), this };
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::iterator
-weighted_directed_graph<T, W, A>::erase(const_iterator first,
-                                        const_iterator last) {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::iterator
+weighted_directed_graph<T, A>::erase(const_iterator first,
+                                     const_iterator last) {
     for (auto iter{ first }; iter != last; ++iter) {
         if (iter.m_nodeIterator != std::end(m_nodes)) {
             remove_all_links_to(iter.m_nodeIterator);
@@ -573,9 +577,9 @@ weighted_directed_graph<T, W, A>::erase(const_iterator first,
                      this };
 }
 
-template<typename T, typename W, typename A>
-bool weighted_directed_graph<T, W, A>::erase_edge(const T& from_node_value,
-                                                  const T& to_node_value) {
+template<typename T, typename A>
+bool weighted_directed_graph<T, A>::erase_edge(const T& from_node_value,
+                                               const T& to_node_value) {
     const auto from{ findNode(from_node_value) };
     const auto to{ findNode(to_node_value) };
     if (from == std::end(m_nodes) || to == std::end(m_nodes)) { return false; }
@@ -585,46 +589,46 @@ bool weighted_directed_graph<T, W, A>::erase_edge(const T& from_node_value,
     return true;
 }
 
-template<typename T, typename W, typename A>
-void weighted_directed_graph<T, W, A>::clear() noexcept {
+template<typename T, typename A>
+void weighted_directed_graph<T, A>::clear() noexcept {
     m_nodes.clear();
 }
 
-template<typename T, typename W, typename A>
-void weighted_directed_graph<T, W, A>::swap(
+template<typename T, typename A>
+void weighted_directed_graph<T, A>::swap(
     weighted_directed_graph& other_graph) noexcept {
     using std::swap;
     m_nodes.swap(other_graph.m_nodes);
     swap(m_allocator, other_graph.m_allocator);
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::reference
-weighted_directed_graph<T, W, A>::operator[](size_t index) {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::reference
+weighted_directed_graph<T, A>::operator[](size_t index) {
     return m_nodes[index].value();
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::const_reference
-weighted_directed_graph<T, W, A>::operator[](size_type index) const {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::const_reference
+weighted_directed_graph<T, A>::operator[](size_type index) const {
     return m_nodes[index].value();
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::reference
-weighted_directed_graph<T, W, A>::at(size_type index) {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::reference
+weighted_directed_graph<T, A>::at(size_type index) {
     return m_nodes.at(index).value();
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::const_reference
-weighted_directed_graph<T, W, A>::at(
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::const_reference
+weighted_directed_graph<T, A>::at(
     weighted_directed_graph::size_type index) const {
     return m_nodes.at(index).value();
 }
 
-template<typename T, typename W, typename A>
-bool weighted_directed_graph<T, W, A>::operator==(
+template<typename T, typename A>
+bool weighted_directed_graph<T, A>::operator==(
     const weighted_directed_graph& rhs) const {
     if (m_nodes.size() != rhs.m_nodes.size()) { return false; }
 
@@ -640,25 +644,25 @@ bool weighted_directed_graph<T, W, A>::operator==(
     return true;
 }
 
-template<typename T, typename W, typename A>
-std::map<T, W, std::less<>, A>
-weighted_directed_graph<T, W, A>::get_adjacent_nodes_values(
-    const typename details::weighted_graph_node<T, W, A>::adjacency_list_type&
+template<typename T, typename A>
+std::map<T, std::less<>, A>
+weighted_directed_graph<T, A>::get_adjacent_nodes_values(
+    const typename details::weighted_graph_node<T, A>::adjacency_list_type&
         indices) const {
-    std::map<T, W, std::less<>, A> values(m_allocator);
+    std::map<T, std::less<>, A> values(m_allocator);
     for (auto&& index: indices) { values.insert(m_nodes[index].value()); }
     return values;
 }
 
-template<typename T, typename W, typename A>
-bool weighted_directed_graph<T, W, A>::operator!=(
-    const weighted_directed_graph<T, W, A>& rhs) const {
+template<typename T, typename A>
+bool weighted_directed_graph<T, A>::operator!=(
+    const weighted_directed_graph<T, A>& rhs) const {
     return !(*this == rhs);
 }
 
-template<typename T, typename W, typename A>
-std::map<T, W, std::less<>, A>
-weighted_directed_graph<T, W, A>::get_adjacent_nodes_values(
+template<typename T, typename A>
+std::map<T, std::less<>, A>
+weighted_directed_graph<T, A>::get_adjacent_nodes_values(
     const T& node_value) const {
     auto iter{ findNode(node_value) };
     if (iter == std::end(m_nodes)) {
@@ -667,26 +671,26 @@ weighted_directed_graph<T, W, A>::get_adjacent_nodes_values(
     return get_adjacent_nodes_values(iter->get_adjacent_nodes_indices());
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::size_type
-weighted_directed_graph<T, W, A>::size() const noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::size_type
+weighted_directed_graph<T, A>::size() const noexcept {
     return m_nodes.size();
 }
 
-template<typename T, typename W, typename A>
-bool weighted_directed_graph<T, W, A>::empty() const noexcept {
+template<typename T, typename A>
+bool weighted_directed_graph<T, A>::empty() const noexcept {
     return m_nodes.empty();
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::size_type
-weighted_directed_graph<T, W, A>::max_size() const noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::size_type
+weighted_directed_graph<T, A>::max_size() const noexcept {
     return m_nodes.max_size();
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::iterator_adjacent_nodes
-weighted_directed_graph<T, W, A>::begin(const T& node_value) noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::iterator_adjacent_nodes
+weighted_directed_graph<T, A>::begin(const T& node_value) noexcept {
     auto iter{ findNode(node_value) };
     if (iter == std::end(m_nodes)) {
         // Default-construct an end iterator, and return
@@ -697,9 +701,9 @@ weighted_directed_graph<T, W, A>::begin(const T& node_value) noexcept {
     };
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::iterator_adjacent_nodes
-weighted_directed_graph<T, W, A>::end(const T& node_value) noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::iterator_adjacent_nodes
+weighted_directed_graph<T, A>::end(const T& node_value) noexcept {
     auto iter{ findNode(node_value) };
     if (iter == std::end(m_nodes)) { return iterator_adjacent_nodes{}; }
     return iterator_adjacent_nodes{
@@ -707,9 +711,9 @@ weighted_directed_graph<T, W, A>::end(const T& node_value) noexcept {
     };
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::const_iterator_adjacent_nodes
-weighted_directed_graph<T, W, A>::cbegin(const T& node_value) const noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::const_iterator_adjacent_nodes
+weighted_directed_graph<T, A>::cbegin(const T& node_value) const noexcept {
     auto iter{ findNode(node_value) };
     if (iter == std::end(m_nodes)) {
         // Default-construct an end iterator, and return
@@ -720,9 +724,9 @@ weighted_directed_graph<T, W, A>::cbegin(const T& node_value) const noexcept {
     };
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::const_iterator_adjacent_nodes
-weighted_directed_graph<T, W, A>::cend(const T& node_value) const noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::const_iterator_adjacent_nodes
+weighted_directed_graph<T, A>::cend(const T& node_value) const noexcept {
     auto iter{ findNode(node_value) };
     if (iter == std::end(m_nodes)) { return const_iterator_adjacent_nodes{}; }
     return const_iterator_adjacent_nodes{
@@ -730,128 +734,128 @@ weighted_directed_graph<T, W, A>::cend(const T& node_value) const noexcept {
     };
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::const_iterator_adjacent_nodes
-weighted_directed_graph<T, W, A>::begin(const T& node_value) const noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::const_iterator_adjacent_nodes
+weighted_directed_graph<T, A>::begin(const T& node_value) const noexcept {
     return cbegin(node_value);
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::const_iterator_adjacent_nodes
-weighted_directed_graph<T, W, A>::end(const T& node_value) const noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::const_iterator_adjacent_nodes
+weighted_directed_graph<T, A>::end(const T& node_value) const noexcept {
     return cend(node_value);
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::reverse_iterator_adjacent_nodes
-weighted_directed_graph<T, W, A>::rbegin(const T& node_value) noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::reverse_iterator_adjacent_nodes
+weighted_directed_graph<T, A>::rbegin(const T& node_value) noexcept {
     return reverse_iterator_adjacent_nodes{ end(node_value) };
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::reverse_iterator_adjacent_nodes
-weighted_directed_graph<T, W, A>::rend(const T& node_value) noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::reverse_iterator_adjacent_nodes
+weighted_directed_graph<T, A>::rend(const T& node_value) noexcept {
     return reverse_iterator_adjacent_nodes{ begin(node_value) };
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::const_reverse_iterator_adjacent_nodes
-weighted_directed_graph<T, W, A>::rbegin(const T& node_value) const noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::const_reverse_iterator_adjacent_nodes
+weighted_directed_graph<T, A>::rbegin(const T& node_value) const noexcept {
     return const_reverse_iterator_adjacent_nodes{ end(node_value) };
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::const_reverse_iterator_adjacent_nodes
-weighted_directed_graph<T, W, A>::rend(const T& node_value) const noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::const_reverse_iterator_adjacent_nodes
+weighted_directed_graph<T, A>::rend(const T& node_value) const noexcept {
     return const_reverse_iterator_adjacent_nodes{ begin(node_value) };
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::const_reverse_iterator_adjacent_nodes
-weighted_directed_graph<T, W, A>::crbegin(const T& node_value) const noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::const_reverse_iterator_adjacent_nodes
+weighted_directed_graph<T, A>::crbegin(const T& node_value) const noexcept {
     return rbegin(node_value);
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::const_reverse_iterator_adjacent_nodes
-weighted_directed_graph<T, W, A>::crend(const T& node_value) const noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::const_reverse_iterator_adjacent_nodes
+weighted_directed_graph<T, A>::crend(const T& node_value) const noexcept {
     return rend(node_value);
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::iterator
-weighted_directed_graph<T, W, A>::begin() noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::iterator
+weighted_directed_graph<T, A>::begin() noexcept {
     return iterator{ std::begin(m_nodes), this };
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::iterator
-weighted_directed_graph<T, W, A>::end() noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::iterator
+weighted_directed_graph<T, A>::end() noexcept {
     return iterator{ std::end(m_nodes), this };
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::const_iterator
-weighted_directed_graph<T, W, A>::begin() const noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::const_iterator
+weighted_directed_graph<T, A>::begin() const noexcept {
     return const_cast<weighted_directed_graph*>(this)->begin();
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::const_iterator
-weighted_directed_graph<T, W, A>::end() const noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::const_iterator
+weighted_directed_graph<T, A>::end() const noexcept {
     return const_cast<weighted_directed_graph*>(this)->end();
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::const_iterator
-weighted_directed_graph<T, W, A>::cbegin() const noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::const_iterator
+weighted_directed_graph<T, A>::cbegin() const noexcept {
     return begin();
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::const_iterator
-weighted_directed_graph<T, W, A>::cend() const noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::const_iterator
+weighted_directed_graph<T, A>::cend() const noexcept {
     return end();
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::reverse_iterator
-weighted_directed_graph<T, W, A>::rbegin() noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::reverse_iterator
+weighted_directed_graph<T, A>::rbegin() noexcept {
     return reverse_iterator{ end() };
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::reverse_iterator
-weighted_directed_graph<T, W, A>::rend() noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::reverse_iterator
+weighted_directed_graph<T, A>::rend() noexcept {
     return reverse_iterator{ begin() };
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::const_reverse_iterator
-weighted_directed_graph<T, W, A>::rbegin() const noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::const_reverse_iterator
+weighted_directed_graph<T, A>::rbegin() const noexcept {
     return const_reverse_iterator{ end() };
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::const_reverse_iterator
-weighted_directed_graph<T, W, A>::rend() const noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::const_reverse_iterator
+weighted_directed_graph<T, A>::rend() const noexcept {
     return const_reverse_iterator{ begin() };
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::const_reverse_iterator
-weighted_directed_graph<T, W, A>::crbegin() const noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::const_reverse_iterator
+weighted_directed_graph<T, A>::crbegin() const noexcept {
     return rbegin();
 }
 
-template<typename T, typename W, typename A>
-typename weighted_directed_graph<T, W, A>::const_reverse_iterator
-weighted_directed_graph<T, W, A>::crend() const noexcept {
+template<typename T, typename A>
+typename weighted_directed_graph<T, A>::const_reverse_iterator
+weighted_directed_graph<T, A>::crend() const noexcept {
     return rend();
 }
 
-template<typename T, typename W, typename A>
-std::wstring to_dot(const weighted_directed_graph<T, W, A>& graph,
+template<typename T, typename A>
+std::wstring to_dot(const weighted_directed_graph<T, A>& graph,
                     std::wstring_view graph_name) {
     std::wstringstream wss;
     wss << std::format(L"digraph {} {{", graph_name.data()) << std::endl;
@@ -862,7 +866,8 @@ std::wstring to_dot(const weighted_directed_graph<T, W, A>& graph,
             wss << node << std::endl;
         } else {
             for (auto iter{ b }; iter != e; ++iter) {
-                wss << std::format(L"{} -> {}", node, *iter) << std::endl;
+                auto [a, b] = *iter;
+                wss << std::format(L"{} -> {}:{}", node, a, b) << std::endl;
             }
         }
     }
@@ -1042,11 +1047,25 @@ graph_iterator<GraphType> graph_iterator<GraphType>::operator--(int) {
 template<typename GraphType>
 class const_adjacent_weighted_nodes_iterator {
 public:
-    using value_type = typename GraphType::value_type;
+    struct value_type {
+        const typename GraphType::value_type node;
+        double weight;
+    };
+
+    struct ref_value_type {
+        const typename GraphType::value_type& node;
+        double weight;
+    };
+
+    struct ptr_value_type {
+        const typename GraphType::value_type* node;
+        double weight;
+    };
+
     using difference_type = ptrdiff_t;
     using iterator_category = std::bidirectional_iterator_tag;
-    using pointer = const value_type*;
-    using reference = const value_type&;
+    using pointer = const ptr_value_type;
+    using reference = const ref_value_type;
     using iterator_type = std::set<details::graph_edge>::const_iterator;
 
     // Bidirectional iterators need to provide a default constructor
@@ -1089,13 +1108,18 @@ template<typename GraphType>
 typename const_adjacent_weighted_nodes_iterator<GraphType>::reference
 const_adjacent_weighted_nodes_iterator<GraphType>::operator*() const {
     // Return an reference to the actual node, not the index to the node.
-    return (*m_graph)[m_adjacentNodeIterator->index()];
+    typename GraphType::const_reference node_ref =
+        (*m_graph)[m_adjacentNodeIterator->index()];
+    auto weight = m_adjacentNodeIterator->weight();
+    return { node_ref, weight };
 }
 
 template<typename GraphType>
 typename const_adjacent_weighted_nodes_iterator<GraphType>::pointer
 const_adjacent_weighted_nodes_iterator<GraphType>::operator->() const {
-    return &((*m_graph)[m_adjacentNodeIterator->index()]);
+    auto node_ref = (*m_graph)[m_adjacentNodeIterator->index()];
+    auto weight = m_adjacentNodeIterator->weight();
+    return { &node_ref, weight };
 }
 
 template<typename GraphType>
@@ -1161,7 +1185,8 @@ template<typename GraphType>
 class adjacent_weighted_nodes_iterator
     : public const_adjacent_weighted_nodes_iterator<GraphType> {
 public:
-    using value_type = typename GraphType::value_type;
+    using value_type =
+        typename const_adjacent_weighted_nodes_iterator<GraphType>::value_type;
     using difference_type = ptrdiff_t;
     using iterator_category = std::bidirectional_iterator_tag;
     using pointer = value_type*;
@@ -1190,14 +1215,14 @@ template<typename GraphType>
 typename adjacent_weighted_nodes_iterator<GraphType>::reference
 adjacent_weighted_nodes_iterator<GraphType>::operator*() {
     return const_cast<reference>(
-        (*(this->m_graph))[*(this->m_adjacentNodeIterator)]);
+        this->const_adjacent_weighted_nodes_iterator<GraphType>::operator*());
 }
 
 template<typename GraphType>
 typename adjacent_weighted_nodes_iterator<GraphType>::pointer
 adjacent_weighted_nodes_iterator<GraphType>::operator->() {
     return const_cast<pointer>(
-        &((*(this->m_graph))[*(this->m_adjacentNodeIterator)]));
+        this->const_adjacent_weighted_nodes_iterator<GraphType>::operator->());
 }
 
 template<typename GraphType>

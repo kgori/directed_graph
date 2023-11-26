@@ -37,12 +37,12 @@ int main() {
     graph.insert_edge(44, 55, .9);
     graph.insert_edge(44, 66, 1.0);
     graph.insert_edge(44, 77, 1.1);
-    std::wcout << to_dot(graph, L"Graph1");
+    // std::wcout << to_dot(graph, L"Graph1");
 
     // Remove an edge and a node.
     graph.erase_edge(22, 44);
     graph.erase(44);
-    std::wcout << to_dot(graph, L"Graph1");
+    // std::wcout << to_dot(graph, L"Graph1");
 
     // Print the size of the graph.
     std::cout << "Size: " << graph.size() << std::endl;
@@ -85,7 +85,8 @@ int main() {
         std::cout << std::boolalpha << (iterBegin == iterEnd) << '\n';
     } else {
         for (auto iter{ iterBegin }; iter != iterEnd; ++iter) {
-            std::cout << *iter << " ";
+            auto [a, b] = *iter;
+            std::cout << "(" << a << "=" << b << ") ";
         }
     }
     std::cout << '\n';
