@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <format>
 #include <iterator>
-#include <map>
+#include <set>
 #include <sstream>
 #include <vector>
 
@@ -257,6 +257,8 @@ public:
     using const_reference = const value_type&;
     using size_type = size_t;
     using difference_type = ptrdiff_t;
+    using pair_allocator = typename std::allocator_traits<
+        A>::template rebind_alloc<std::pair<T, double>>;
 
     // Constructors
     // Let the compiler default the default constructor, but make it noexcept
@@ -395,8 +397,11 @@ public:
 
     // Returns a set with the values of the nodes connected to the node with
     // node_value
-    [[nodiscard]] std::map<T, std::less<>, A>
+    [[nodiscard]] std::set<T, std::less<>, A>
     get_adjacent_nodes_values(const T& node_value) const;
+
+    [[nodiscard]] std::set<std::pair<T, double>, std::less<>, pair_allocator>
+    get_adjacent_nodes_values_and_weights(const T& node_value) const;
 
 private:
     friend class details::weighted_graph_node<T, A>;
@@ -423,7 +428,12 @@ private:
     void remove_all_links_to(
         typename nodes_container_type::const_iterator node_iter);
 
-    [[nodiscard]] std::map<T, std::less<>, A> get_adjacent_nodes_values(
+    [[nodiscard]] std::set<T, std::less<>, A> get_adjacent_nodes_values(
+        const typename details::weighted_graph_node<T, A>::adjacency_list_type&
+            indices) const;
+
+    [[nodiscard]] std::set<std::pair<T, double>, std::less<>, pair_allocator>
+    get_adjacent_nodes_values_and_weights(
         const typename details::weighted_graph_node<T, A>::adjacency_list_type&
             indices) const;
 };
@@ -645,30 +655,67 @@ bool weighted_directed_graph<T, A>::operator==(
 }
 
 template<typename T, typename A>
-std::map<T, std::less<>, A>
+std::set<T, std::less<>, A>
 weighted_directed_graph<T, A>::get_adjacent_nodes_values(
     const typename details::weighted_graph_node<T, A>::adjacency_list_type&
         indices) const {
-    std::map<T, std::less<>, A> values(m_allocator);
-    for (auto&& index: indices) { values.insert(m_nodes[index].value()); }
+    std::set<T, std::less<>, A> values(m_allocator);
+    for (auto&& edge: indices) { values.insert(m_nodes[edge.index()].value()); }
+    return values;
+}
+
+template<typename T, typename A>
+std::set<std::pair<T, double>, std::less<>,
+         typename std::allocator_traits<A>::template rebind_alloc<
+             std::pair<T, double>>>
+weighted_directed_graph<T, A>::get_adjacent_nodes_values_and_weights(
+    const typename details::weighted_graph_node<T, A>::adjacency_list_type&
+        indices) const {
+    using PairAllocator = typename std::allocator_traits<
+        A>::template rebind_alloc<std::pair<T, double>>;
+    std::set<std::pair<T, double>, std::less<>, PairAllocator> values(
+        m_allocator);
+    for (auto&& edge: indices) {
+        T value = m_nodes[edge.index()].value();
+        double weight = edge.weight();
+        values.insert({ value, weight });
+    }
     return values;
 }
 
 template<typename T, typename A>
 bool weighted_directed_graph<T, A>::operator!=(
-    const weighted_directed_graph<T, A>& rhs) const {
+    const weighted_directed_graph& rhs) const {
     return !(*this == rhs);
 }
 
 template<typename T, typename A>
-std::map<T, std::less<>, A>
+std::set<T, std::less<>, A>
 weighted_directed_graph<T, A>::get_adjacent_nodes_values(
     const T& node_value) const {
     auto iter{ findNode(node_value) };
     if (iter == std::end(m_nodes)) {
-        return std::map<T, std::less<>, A>{ m_allocator };
+        return std::set<T, std::less<>, A>{ m_allocator };
     }
     return get_adjacent_nodes_values(iter->get_adjacent_nodes_indices());
+}
+
+template<typename T, typename A>
+std::set<std::pair<T, double>, std::less<>,
+         typename std::allocator_traits<A>::template rebind_alloc<
+             std::pair<T, double>>>
+weighted_directed_graph<T, A>::get_adjacent_nodes_values_and_weights(
+    const T& node_value) const {
+    using PairAllocator = typename std::allocator_traits<
+        A>::template rebind_alloc<std::pair<T, double>>;
+    auto iter{ findNode(node_value) };
+    if (iter == std::end(m_nodes)) {
+        return std::set<std::pair<T, double>, std::less<>, PairAllocator>{
+            m_allocator
+        };
+    }
+    return get_adjacent_nodes_values_and_weights(
+        iter->get_adjacent_nodes_indices());
 }
 
 template<typename T, typename A>
@@ -863,11 +910,11 @@ std::wstring to_dot(const weighted_directed_graph<T, A>& graph,
         const auto b{ graph.cbegin(node) };
         const auto e{ graph.cend(node) };
         if (b == e) {
-            wss << node << std::endl;
+            wss << "  " << node << std::endl;
         } else {
             for (auto iter{ b }; iter != e; ++iter) {
                 auto [a, b] = *iter;
-                wss << std::format(L"{} -> {}:{}", node, a, b) << std::endl;
+                wss << std::format(L"  {} -> {}:{}", node, a, b) << std::endl;
             }
         }
     }
